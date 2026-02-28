@@ -7,6 +7,9 @@
     <script src="storage.js"></script>
 </head>
 <body>
+<button id="storageDisclaimerBtn" type="button" class="storage-disclaimer-btn" title="Storage disclaimer">!</button>
+<span class="storage-disclaimer-label">Must read!!</span>
+
 <div class="index-page">
     <img src="content/TTFE banner.png" alt="TTFE Banner" class="index-header-banner">
     <div class="index-card">
@@ -65,6 +68,20 @@
             <span class="hold-delete-label">Hold 4s to Delete</span>
             <span class="hold-delete-progress" id="holdDeleteProgress"></span>
         </button>
+    </div>
+</div>
+
+<div id="storageDisclaimerModal" class="modal hidden">
+    <div class="modal-content index-disclaimer-modal-content">
+        <h2>Storage Notice</h2>
+        <p>
+            The storage of this site is local to your browser.
+            Opening the site on other browsers or other browser profiles will create a new instance.
+            Save and move your tech trees by using the import and export tools.
+        </p>
+        <div class="modal-buttons">
+            <button id="closeStorageDisclaimer" type="button">Close</button>
+        </div>
     </div>
 </div>
 
@@ -472,6 +489,26 @@ holdDeleteBtn.addEventListener("touchstart", (e) => {
 }, { passive: false });
 holdDeleteBtn.addEventListener("touchend", stopHoldDelete);
 holdDeleteBtn.addEventListener("touchcancel", stopHoldDelete);
+
+const storageDisclaimerBtn = document.getElementById("storageDisclaimerBtn");
+const storageDisclaimerModal = document.getElementById("storageDisclaimerModal");
+const closeStorageDisclaimerBtn = document.getElementById("closeStorageDisclaimer");
+
+if (storageDisclaimerBtn && storageDisclaimerModal && closeStorageDisclaimerBtn) {
+    storageDisclaimerBtn.addEventListener("click", () => {
+        storageDisclaimerModal.classList.remove("hidden");
+    });
+
+    closeStorageDisclaimerBtn.addEventListener("click", () => {
+        storageDisclaimerModal.classList.add("hidden");
+    });
+
+    storageDisclaimerModal.addEventListener("click", (e) => {
+        if (e.target === storageDisclaimerModal) {
+            storageDisclaimerModal.classList.add("hidden");
+        }
+    });
+}
 
 async function initializeIndexData() {
     factions = await TechTreeStorage.getFactions();
