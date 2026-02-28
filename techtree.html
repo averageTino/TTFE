@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tech Tree</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+    <script src="storage.js"></script>
+    <style>
+    /* Specs labels and inputs in vehicle modal */
+    #vehicleModal .spec-label{font-weight:700;display:block;margin-top:8px}
+    #vehicleModal .spec-input{display:block;width:100%;box-sizing:border-box;padding:6px 8px;margin-top:4px;text-align:center}
+    </style>
+</head>
+<body>
+
+<div class="top-bar">
+    <span class="back-btn" onclick="goBack()">&lt;</span>
+    <h1 id="factionTitle"></h1>
+    <span class="top-spacer"></span>
+    <span id="importBtn" class="edit-btn">Import</span>
+    <span id="exportBtn" class="edit-btn">Export</span>
+    <span id="storageUsage" class="storage-usage" title="Approximate local browser storage usage"></span>
+    <span id="addClassBtn" class="edit-btn" style="display:none;">Add Class</span>
+    <span id="editToggle" class="edit-btn">Edit</span>
+</div>
+
+<input type="file" id="importJsonInput" accept="application/json,.json" style="display:none;">
+
+<div class="tech-tree-grid" id="techTree"></div>
+
+<!-- VEHICLE CREATION MODAL -->
+<div id="vehicleModal" class="modal hidden">
+    <div class="modal-content">
+        <h2 id="modalTitle">Create Vehicle</h2>
+
+        <label>Name</label>
+        <input type="text" id="vehicleName">
+
+        <label>Class</label>
+        <select id="vehicleClass">
+            <option>Heavy Tank</option>
+            <option>Medium Tank</option>
+            <option>Light Tank</option>
+            <option>Tank Destroyer</option>
+            <option>SPAA</option>
+            <option>MBT</option>
+        </select>
+
+        <label>Tier</label>
+        <select id="vehicleTier">
+            <option value="1">I</option>
+            <option value="2">II</option>
+            <option value="3">III</option>
+            <option value="4">IV</option>
+            <option value="5">V</option>
+            <option value="6">VI</option>
+            <option value="7">VII</option>
+            <option value="8">VIII</option>
+            <option value="9">IX</option>
+            <option value="10">X</option>
+            <option value="11">XI</option>
+            <option value="12">XII</option>
+        </select>
+
+        <label>Description</label>
+        <div id="descToolbar" style="margin-bottom:4px;">
+            <button type="button" data-cmd="bold"><b>B</b></button>
+            <button type="button" data-cmd="italic"><i>I</i></button>
+            <button type="button" data-cmd="underline"><u>U</u></button>
+        </div>
+        <textarea id="vehicleDesc" rows="3" style="width:100%;"></textarea>
+
+        <label>Images (up to 5)</label>
+        <input type="file" id="vehicleImages" accept="image/*" multiple>
+        <div id="imagePreviewContainer" style="display:flex;gap:5px;margin-top:5px;"></div>
+
+        <label>Links (optional)</label>
+        <div class="links-dropdown" id="linksDropdown">
+            <button type="button" id="linksDropdownToggle" class="links-dropdown-toggle">Select links (0)</button>
+            <div id="linksDropdownPanel" class="links-dropdown-panel hidden">
+                <input type="text" id="vehicleLinksSearch" class="links-search" placeholder="Search vehicles...">
+                <div id="vehicleLinksList" class="vehicle-links-list"></div>
+            </div>
+        </div>
+
+        <label class="spec-label" for="vehicleHull">Hull</label>
+        <input class="spec-input" type="text" id="vehicleHull">
+
+        <label class="spec-label" for="vehicleTurret">Turret</label>
+        <input class="spec-input" type="text" id="vehicleTurret">
+
+        <label class="spec-label" for="vehicleGun">Gun</label>
+        <input class="spec-input" type="text" id="vehicleGun">
+
+        <div class="modal-buttons">
+            <button id="createVehicle">SAVE</button>
+            <button id="cancelVehicle">CANCEL</button>
+        </div>
+        <button id="removeVehicle" type="button" class="hold-delete-btn" style="display:none;">
+            <span class="hold-delete-label">Hold 4s to Delete</span>
+            <span class="hold-delete-progress" id="holdDeleteVehicleProgress"></span>
+        </button>
+    </div>
+</div>
+
+<!-- CLASS CREATION MODAL -->
+<div id="classModal" class="modal hidden">
+    <div class="modal-content">
+        <h2 id="classModalTitle">New Class</h2>
+        <label>Name</label>
+        <input type="text" id="className">
+        <label>Color</label>
+        <input type="color" id="classColor" value="#ffffff">
+        <div id="colorPreview" class="color-preview"></div>
+        <div class="modal-buttons">
+            <button id="saveClass">Save</button>
+            <button id="cancelClass">Cancel</button>
+        </div>
+        <button id="removeClass" type="button" class="hold-delete-btn" style="display:none;">
+            <span class="hold-delete-label">Hold 4s to Delete</span>
+            <span class="hold-delete-progress" id="holdDeleteClassProgress"></span>
+        </button>
+    </div>
+</div>
+
+<script>
+function getFlagEmoji(countryCode) {
+    if (!countryCode || countryCode.length !== 2) {
+        return "";
+    }
+    const codePoints = countryCode
+        .toUpperCase()
+        .split('')
+        .map(char => 127397 + char.charCodeAt());
+    return String.fromCodePoint(...codePoints);
+}
+
+function getFactionFlagSrc(flagValue) {
+    if (!flagValue) return "";
+    const raw = String(flagValue).trim();
+    if (!raw) return "";
+    if (raw.startsWith('custom:')) return raw.slice('custom:'.length);
+    if (raw.startsWith('data:image/')) return raw;
+    const lowered = raw.toLowerCase();
+    if (/\.(svg|png|jpe?g|webp|gif)$/i.test(raw)) return `content/${raw}`;
+    if (lowered.length === 2) return `content/${lowered}.svg`;
+    return "";
+}
+
+function setFactionTitle() {
+    const titleElem = document.getElementById("factionTitle");
+    if (!titleElem || !faction) return;
+
+    titleElem.innerHTML = "";
+    const flagSrc = getFactionFlagSrc(faction.flag);
+    if (flagSrc) {
+        const flagImg = document.createElement('img');
+        flagImg.src = flagSrc;
+        flagImg.alt = faction.flag || "flag";
+        flagImg.className = 'title-flag-icon';
+        flagImg.onerror = () => {
+            flagImg.remove();
+            if (faction.flag && String(faction.flag).length === 2) {
+                titleElem.prepend(document.createTextNode(getFlagEmoji(faction.flag) + " "));
+            }
+        };
+        titleElem.appendChild(flagImg);
+    } else if (faction.flag && String(faction.flag).length === 2) {
+        const flagText = document.createTextNode(getFlagEmoji(faction.flag) + " ");
+        titleElem.appendChild(flagText);
+    }
+
+    titleElem.appendChild(document.createTextNode(faction.name + " Tech Tree"));
+}
+
+let factions = [];
+let currentId = null;
+let editMode = false;
+let selectedTier = null;
+let editingTier = null;
+let editingIndex = null;
+let editingVehicle = null;
+let modalLinkedIds = [];
+
+const vehicleRoles = [
+    "Heavy Tank",
+    "Medium Tank",
+    "Light Tank",
+    "Tank Destroyer",
+    "MBT",
+    "SPAA"
+];
+
+// helper to convert number to roman numeral (1-12)
+function toRoman(num) {
+    const roman = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+    return roman[num] || num;
+}
+
+// convert hex color (#rrggbb) to {r,g,b}
+function hexToRgb(hex) {
+    if (hex.startsWith('#')) hex = hex.slice(1);
+    if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+    }
+    const num = parseInt(hex, 16);
+    return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+    };
+}
+
+// return fading gradient string from a base hex color
+function gradientFromColor(hex) {
+    const {r,g,b} = hexToRgb(hex);
+    return `linear-gradient(to right, rgba(${r},${g},${b},0.30), rgba(${r},${g},${b},0.15), rgba(${r},${g},${b},0.05), rgba(${r},${g},${b},0))`;
+}
+
+function getRoleBorderColor(roleObj, roleName) {
+    const configured = String(roleObj?.color || '').trim().toLowerCase();
+    if (configured && configured !== '#fff' && configured !== '#ffffff') {
+        return roleObj.color;
+    }
+    const fallbackByRole = {
+        'Heavy Tank': '#7b3f00',
+        'Medium Tank': '#4b6fa5',
+        'Light Tank': '#3d7a3d',
+        'MBT': '#783ca0',
+        'Tank Destroyer': '#a02828',
+        'SPAA': '#c8aa28'
+    };
+    return fallbackByRole[roleName] || '#ffffff';
+}
+
+// helper to resize data URLs; quality parameter allows aggressive reduction
+function resizeDataUrl(dataUrl, maxDim, callback, quality = 0.7) {
+    const img = new Image();
+    img.onload = () => {
+        let { width, height } = img;
+        if (width <= maxDim && height <= maxDim && quality >= 0.7) {
+            callback(dataUrl);
+            return;
+        }
+        const scale = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const resized = canvas.toDataURL('image/jpeg', quality);
+        callback(resized);
+    };
+    img.onerror = () => {
+        callback(dataUrl);
+    };
+    img.src = dataUrl;
+}
+
+// aggressively compress an array of dataURLs when storage quota is hit
+function reduceImagesForQuota(images) {
+    return new Promise(resolve => {
+        const results = [];
+        let remaining = images.length;
+        if (remaining === 0) {
+            resolve(results);
+            return;
+        }
+        images.forEach((data, idx) => {
+            // first scale to 400px then 200px with lower quality
+            resizeDataUrl(data, 400, (step1) => {
+                resizeDataUrl(step1, 200, (step2) => {
+                    results[idx] = step2;
+                    remaining--;
+                    if (remaining === 0) resolve(results);
+                }, 0.5);
+            }, 0.5);
+        });
+    });
+}
+
+const vehicleDetailWindows = new Set();
+let detailWindowZ = 2600;
+
+// render simple markdown-like tags **bold**, *italic*, __underline__
+function renderDescription(text) {
+    if (!text) return '';
+    // escape HTML
+    let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // bold **...**
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // italic *...*
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    // underline __...__
+    html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+    return html;
+}
+
+function generateVehicleId() {
+    return 'veh-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 9);
+}
+
+function ensureVehicleIds() {
+    if (!faction || !faction.techTree) return;
+    let changed = false;
+    for (let tier = 1; tier <= 12; tier++) {
+        const arr = faction.techTree[tier] || [];
+        arr.forEach(v => {
+            if (!v.id) {
+                v.id = generateVehicleId();
+                changed = true;
+            }
+            if (v.links && !Array.isArray(v.links)) {
+                v.links = [];
+                changed = true;
+            }
+        });
+    }
+    if (changed) saveFactions();
+}
+
+function getAllVehicles() {
+    const all = [];
+    if (!faction || !faction.techTree) return all;
+    for (let tier = 1; tier <= 12; tier++) {
+        const arr = faction.techTree[tier] || [];
+        arr.forEach(v => {
+            all.push({ id: v.id, name: v.name, tier: tier, class: v.class });
+        });
+    }
+    return all;
+}
+
+function renderVehicleLinksList(excludeId = null) {
+    const list = document.getElementById("vehicleLinksList");
+    if (!list) return;
+    list.innerHTML = "";
+
+    const searchElem = document.getElementById("vehicleLinksSearch");
+    const query = (searchElem ? searchElem.value : "").trim().toLowerCase();
+
+    const vehicles = getAllVehicles()
+        .filter(v => v.id && v.id !== excludeId)
+        .filter(v => {
+            if (!query) return true;
+            const label = `${toRoman(v.tier)} ${v.class} ${v.name}`.toLowerCase();
+            return label.includes(query);
+        })
+        .sort((a, b) => (a.tier - b.tier) || a.name.localeCompare(b.name));
+
+    if (!vehicles.length) {
+        const empty = document.createElement("div");
+        empty.textContent = "No vehicles available to link.";
+        empty.style.opacity = "0.75";
+        empty.style.fontSize = "12px";
+        list.appendChild(empty);
+        updateLinksDropdownLabel();
+        return;
+    }
+
+    vehicles.forEach(v => {
+        const row = document.createElement("label");
+        row.className = "vehicle-link-item";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = v.id;
+        cb.checked = modalLinkedIds.includes(v.id);
+        cb.addEventListener("change", () => {
+            if (cb.checked) {
+                if (!modalLinkedIds.includes(v.id)) modalLinkedIds.push(v.id);
+            } else {
+                modalLinkedIds = modalLinkedIds.filter(id => id !== v.id);
+            }
+            updateLinksDropdownLabel();
+        });
+
+        const txt = document.createElement("span");
+        txt.textContent = `${toRoman(v.tier)} • ${v.class} • ${v.name}`;
+
+        row.appendChild(cb);
+        row.appendChild(txt);
+        list.appendChild(row);
+    });
+
+    updateLinksDropdownLabel();
+}
+
+function updateLinksDropdownLabel() {
+    const btn = document.getElementById("linksDropdownToggle");
+    if (!btn) return;
+    const count = modalLinkedIds.length;
+    btn.textContent = count > 0 ? `Select links (${count})` : "Select links (0)";
+}
+
+function drawVehicleLinks(container, visibleVehicleElements, visibleVehiclesById) {
+    const old = container.querySelector('.connector-overlay');
+    if (old) old.remove();
+
+    const containerRect = container.getBoundingClientRect();
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'connector-overlay');
+    svg.setAttribute('width', String(containerRect.width));
+    svg.setAttribute('height', String(containerRect.height));
+
+    const drawn = new Set();
+
+    visibleVehiclesById.forEach((vehicle, sourceId) => {
+        if (!Array.isArray(vehicle.links) || !vehicle.links.length) return;
+        const sourceElem = visibleVehicleElements.get(sourceId);
+        if (!sourceElem) return;
+
+        const sourceRect = sourceElem.getBoundingClientRect();
+        const x1 = sourceRect.left + sourceRect.width / 2 - containerRect.left;
+        const y1 = sourceRect.top + sourceRect.height / 2 - containerRect.top;
+
+        vehicle.links.forEach(targetId => {
+            const targetElem = visibleVehicleElements.get(targetId);
+            if (!targetElem) return;
+
+            const key = [sourceId, targetId].sort().join('|');
+            if (drawn.has(key)) return;
+            drawn.add(key);
+
+            const targetRect = targetElem.getBoundingClientRect();
+            const x2 = targetRect.left + targetRect.width / 2 - containerRect.left;
+            const y2 = targetRect.top + targetRect.height / 2 - containerRect.top;
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.classList.add('connector-line');
+            line.dataset.sourceId = sourceId;
+            line.dataset.targetId = targetId;
+            line.setAttribute('x1', String(x1));
+            line.setAttribute('y1', String(y1));
+            line.setAttribute('x2', String(x2));
+            line.setAttribute('y2', String(y2));
+            line.setAttribute('stroke', '#ffffff');
+            line.setAttribute('stroke-width', '1');
+            line.setAttribute('opacity', '0.9');
+            svg.appendChild(line);
+        });
+    });
+
+    container.appendChild(svg);
+}
+
+async function updateStorageUsageIndicator() {
+    const elem = document.getElementById("storageUsage");
+    if (!elem) return;
+    const info = await TechTreeStorage.getUsageInfo();
+    const usedBytes = info.usedBytes || 0;
+    const quotaBytes = info.quotaBytes || 0;
+    const usedMb = usedBytes / (1024 * 1024);
+    const quotaMb = quotaBytes > 0 ? quotaBytes / (1024 * 1024) : 0;
+    const pct = quotaBytes > 0 ? Math.min(100, Math.round((usedBytes / quotaBytes) * 100)) : 0;
+    if (quotaBytes > 0) {
+        elem.textContent = `Storage: ${usedMb.toFixed(2)} MB / ${quotaMb.toFixed(0)} MB (${pct}%)`;
+    } else {
+        elem.textContent = `Storage: ${usedMb.toFixed(2)} MB`;
+    }
+}
+
+function warnIfIndexedDbUnavailable() {
+    if (TechTreeStorage.useIndexedDB) return;
+    const key = "tt-idb-unavailable-warned";
+    try {
+        if (sessionStorage.getItem(key) === "1") return;
+        sessionStorage.setItem(key, "1");
+    } catch {
+    }
+    alert("IndexedDB is unavailable in this browser/session. The app is running in limited fallback mode (localStorage), so large saved data may be inaccessible or hit low storage limits.");
+}
+
+function setHoveredVehicleLinks(vehicleId) {
+    const overlay = document.querySelector('.connector-overlay');
+    if (!overlay) return;
+    const lines = overlay.querySelectorAll('.connector-line');
+    lines.forEach(line => {
+        const matches = line.dataset.sourceId === vehicleId || line.dataset.targetId === vehicleId;
+        line.classList.toggle('connector-line-highlight', !!vehicleId && matches);
+    });
+}
+
+function setHoveredVehicleCards(vehicleId) {
+    const allCards = document.querySelectorAll('.tank-box');
+    allCards.forEach(card => card.classList.remove('tank-linked-highlight'));
+
+    if (!vehicleId) return;
+
+    const overlay = document.querySelector('.connector-overlay');
+    if (!overlay) return;
+
+    const connectedIds = new Set([vehicleId]);
+    const lines = overlay.querySelectorAll('.connector-line');
+    lines.forEach(line => {
+        if (line.dataset.sourceId === vehicleId || line.dataset.targetId === vehicleId) {
+            if (line.dataset.sourceId) connectedIds.add(line.dataset.sourceId);
+            if (line.dataset.targetId) connectedIds.add(line.dataset.targetId);
+        }
+    });
+
+    allCards.forEach(card => {
+        if (connectedIds.has(card.dataset.vehicleId)) {
+            card.classList.add('tank-linked-highlight');
+        }
+    });
+}
+
+function focusDetailWindow(win) {
+    detailWindowZ += 1;
+    win.style.zIndex = String(detailWindowZ);
+}
+
+function closeVehicleDetailWindow(win) {
+    if (!win) return;
+    if (vehicleDetailWindows.has(win)) vehicleDetailWindows.delete(win);
+    win.remove();
+}
+
+function closeAllVehicleDetailWindows() {
+    vehicleDetailWindows.forEach(win => win.remove());
+    vehicleDetailWindows.clear();
+}
+
+function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+}
+
+function makeDetailWindowDraggable(win, handle, ignoreElem) {
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const onMove = (e) => {
+        if (!isDragging) return;
+        const maxLeft = window.innerWidth - win.offsetWidth;
+        const maxTop = window.innerHeight - win.offsetHeight;
+        win.style.left = clamp(e.clientX - offsetX, 0, Math.max(0, maxLeft)) + 'px';
+        win.style.top = clamp(e.clientY - offsetY, 0, Math.max(0, maxTop)) + 'px';
+    };
+
+    const onUp = () => {
+        isDragging = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    };
+
+    handle.addEventListener('mousedown', (e) => {
+        if (ignoreElem && (ignoreElem === e.target || ignoreElem.contains(e.target))) return;
+        isDragging = true;
+        focusDetailWindow(win);
+        const rect = win.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+}
+
+function makeDetailWindowResizable(win, resizeHandle) {
+    let isResizing = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const minW = 280;
+    const minH = 220;
+
+    const onMove = (e) => {
+        if (!isResizing) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        const nextW = clamp(startW + dx, minW, window.innerWidth - win.offsetLeft - 6);
+        const nextH = clamp(startH + dy, minH, window.innerHeight - win.offsetTop - 6);
+        win.style.width = nextW + 'px';
+        win.style.height = nextH + 'px';
+    };
+
+    const onUp = () => {
+        isResizing = false;
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    };
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+        isResizing = true;
+        focusDetailWindow(win);
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = win.offsetWidth;
+        startH = win.offsetHeight;
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    });
+}
+
+function openVehicleDetailWindow(vehicle, tier, role, sourceElem) {
+    const panel = document.createElement('div');
+    panel.className = 'vehicle-detail-window';
+
+    const header = document.createElement('div');
+    header.className = 'vehicle-detail-header';
+
+    const title = document.createElement('div');
+    title.className = 'vehicle-detail-title';
+    title.textContent = `${toRoman(tier)} - ${role}`;
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'vehicle-detail-close';
+    closeBtn.textContent = '✕';
+    closeBtn.onclick = () => closeVehicleDetailWindow(panel);
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+
+    const body = document.createElement('div');
+    body.className = 'vehicle-detail-body';
+
+    const name = document.createElement('div');
+    name.className = 'vehicle-detail-name';
+    name.textContent = vehicle.name || '';
+    body.appendChild(name);
+
+    let imgs = [];
+    if (vehicle.images && vehicle.images.length) imgs = vehicle.images.slice();
+    else if (vehicle.image) imgs = [vehicle.image];
+
+    if (imgs.length) {
+        const previewWrap = document.createElement('div');
+        previewWrap.className = 'vehicle-detail-preview-wrap';
+
+        const mainImg = document.createElement('img');
+        mainImg.className = 'vehicle-detail-main-image';
+        const selectedSrc = imgs[vehicle.preview || 0] || imgs[0];
+        mainImg.src = selectedSrc;
+
+        const hoverImg = document.createElement('img');
+        hoverImg.className = 'vehicle-detail-hover-image hidden';
+
+        previewWrap.appendChild(mainImg);
+        previewWrap.appendChild(hoverImg);
+        body.appendChild(previewWrap);
+
+        if (imgs.length > 1) {
+            const album = document.createElement('div');
+            album.className = 'vehicle-detail-album';
+            imgs.forEach(src => {
+                const thumb = document.createElement('img');
+                thumb.className = 'vehicle-detail-thumb';
+                thumb.src = src;
+                thumb.addEventListener('mouseenter', () => {
+                    hoverImg.src = src;
+                    hoverImg.classList.remove('hidden');
+                });
+                thumb.addEventListener('mouseleave', () => {
+                    hoverImg.classList.add('hidden');
+                });
+                album.appendChild(thumb);
+            });
+            body.appendChild(album);
+        }
+    }
+
+    if (vehicle.description) {
+        const desc = document.createElement('div');
+        desc.className = 'vehicle-detail-desc';
+        desc.innerHTML = renderDescription(vehicle.description);
+        body.appendChild(desc);
+    }
+
+    const stats = document.createElement('div');
+    stats.className = 'vehicle-detail-stats';
+    const addStatRow = (label, value) => {
+        const row = document.createElement('div');
+        row.className = 'vehicle-detail-stat-row';
+
+        const key = document.createElement('span');
+        key.className = 'vehicle-detail-stat-label';
+        key.textContent = label + ':';
+
+        const val = document.createElement('span');
+        val.className = 'vehicle-detail-stat-value';
+        val.textContent = value;
+
+        row.appendChild(key);
+        row.appendChild(val);
+        stats.appendChild(row);
+    };
+    if (vehicle.hull) {
+        addStatRow('Hull', vehicle.hull);
+    }
+    if (vehicle.turret) {
+        addStatRow('Turret', vehicle.turret);
+    }
+    if (vehicle.gun) {
+        addStatRow('Gun', vehicle.gun);
+    }
+    if (stats.children.length) body.appendChild(stats);
+
+    panel.appendChild(header);
+    panel.appendChild(body);
+
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'vehicle-detail-resize';
+    panel.appendChild(resizeHandle);
+
+    document.body.appendChild(panel);
+    vehicleDetailWindows.add(panel);
+    focusDetailWindow(panel);
+
+    const srcRect = sourceElem.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const left = clamp(srcRect.right + 10, 6, window.innerWidth - panelRect.width - 6);
+    const top = clamp(srcRect.top, 6, window.innerHeight - panelRect.height - 6);
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+
+    makeDetailWindowDraggable(panel, header, closeBtn);
+    makeDetailWindowResizable(panel, resizeHandle);
+    panel.addEventListener('mousedown', () => focusDetailWindow(panel));
+}
+
+function moveRole(index, delta) {
+    const newIndex = index + delta;
+    if (newIndex < 0 || newIndex >= faction.roles.length) return;
+    const tmp = faction.roles[index];
+    faction.roles[index] = faction.roles[newIndex];
+    faction.roles[newIndex] = tmp;
+    saveFactions();
+    renderTechTree();
+}
+
+// text formatting helper for description
+function wrapSelection(textarea, before, after) {
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const val = textarea.value;
+    textarea.value = val.slice(0, start) + before + val.slice(start, end) + after + val.slice(end);
+    textarea.selectionStart = start + before.length;
+    textarea.selectionEnd = end + before.length;
+    textarea.focus();
+}
+
+// attach toolbar commands once DOM is ready
+window.addEventListener('DOMContentLoaded', () => {
+    const toolbar = document.getElementById("descToolbar");
+    if (toolbar) {
+        toolbar.addEventListener("click", (e) => {
+            const cmd = e.target.getAttribute("data-cmd");
+            const ta = document.getElementById("vehicleDesc");
+            if (!cmd || !ta) return;
+            switch (cmd) {
+                case "bold":
+                    wrapSelection(ta, "**", "**");
+                    break;
+                case "italic":
+                    wrapSelection(ta, "*", "*");
+                    break;
+                case "underline":
+                    wrapSelection(ta, "__", "__");
+                    break;
+            }
+        });
+    }
+
+    const linksDropdown = document.getElementById("linksDropdown");
+    const linksToggle = document.getElementById("linksDropdownToggle");
+    const linksPanel = document.getElementById("linksDropdownPanel");
+    const linksSearch = document.getElementById("vehicleLinksSearch");
+
+    if (linksToggle && linksPanel) {
+        linksToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            linksPanel.classList.toggle("hidden");
+            if (!linksPanel.classList.contains("hidden") && linksSearch) {
+                linksSearch.focus();
+            }
+        });
+    }
+
+    if (linksSearch) {
+        linksSearch.addEventListener("input", () => {
+            renderVehicleLinksList(editingVehicle ? editingVehicle.id : null);
+        });
+    }
+
+    document.addEventListener("click", (e) => {
+        if (!linksDropdown || !linksPanel) return;
+        if (!linksDropdown.contains(e.target)) {
+            linksPanel.classList.add("hidden");
+        }
+    });
+});
+
+let faction = factions.find(f => f.id === currentId);
+
+async function initializeTechTreePage() {
+    factions = await TechTreeStorage.getFactions();
+    currentId = await TechTreeStorage.getCurrentFaction();
+    warnIfIndexedDbUnavailable();
+    faction = factions.find(f => f.id === currentId);
+
+    if (faction && (!faction.roles || !Array.isArray(faction.roles) || faction.roles.length === 0)) {
+        const defaults = ["Heavy Tank","Medium Tank","Light Tank","Tank Destroyer","MBT","SPAA"];
+        faction.roles = defaults.map(n => ({ name: n, hidden: false, color: '#ffffff' }));
+        saveFactions();
+    }
+
+    if (faction) {
+        ensureVehicleIds();
+    }
+
+    if (!faction) {
+        document.body.innerHTML = "<h1>Faction Not Found</h1><a href='index.html'>Back</a>";
+    } else {
+        setFactionTitle();
+        updateStorageUsageIndicator();
+
+        if (!faction.techTree || Object.keys(faction.techTree).length === 0) {
+            faction.techTree = {};
+            for (let i = 1; i <= 12; i++) {
+                faction.techTree[i] = [];
+            }
+            saveFactions();
+        }
+
+        renderTechTree();
+    }
+}
+
+initializeTechTreePage().catch(err => {
+    console.error("Failed to initialize tech tree page:", err);
+    document.body.innerHTML = "<h1>Failed to load data</h1><a href='index.html'>Back</a>";
+});
+
+function renderTechTree() {
+    const container = document.getElementById("techTree");
+    container.innerHTML = "";
+    const visibleVehicleElements = new Map();
+    const visibleVehiclesById = new Map();
+
+    // Top-left empty cell
+    const emptyCorner = document.createElement("div");
+    emptyCorner.className = "grid-corner";
+    container.appendChild(emptyCorner);
+
+    // helper to convert numbers to roman numerals
+    function toRoman(num) {
+        // support 1 through 12
+        const romanNumerals = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+        return romanNumerals[num] || num;
+    }
+
+    // Tier headers now use roman numerals and are horizontal
+    for (let tier = 1; tier <= 12; tier++) {
+        const tierHeader = document.createElement("div");
+        tierHeader.className = "tier-header";
+        tierHeader.textContent = toRoman(tier);
+        container.appendChild(tierHeader);
+    }
+
+    // Rows for each vehicle role defined on faction
+    faction.roles.forEach((roleObj, roleIndex) => {
+        const role = roleObj.name;
+        if (roleObj.hidden && !editMode) return;
+
+        const roleLabel = document.createElement("div");
+        roleLabel.className = "role-label " + role.replace(/\s/g, "-");
+        roleLabel.appendChild(document.createTextNode(role));
+        if (roleObj.color && roleObj.color.toLowerCase() !== '#ffffff') {
+            roleLabel.style.background = gradientFromColor(roleObj.color);
+            roleLabel.style.color = '#fff';
+        }
+        if (roleObj.hidden && editMode) {
+            roleLabel.style.opacity = "0.35";
+        }
+        // edit-mode controls for role
+        if (editMode) {
+            roleLabel.style.position = "relative";
+            // make draggable for reordering
+            roleLabel.draggable = true;
+            roleLabel.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', roleIndex);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            roleLabel.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            });
+            roleLabel.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                const to = roleIndex;
+                if (from !== to) {
+                    const item = faction.roles.splice(from, 1)[0];
+                    faction.roles.splice(to, 0, item);
+                    saveFactions();
+                    renderTechTree();
+                }
+            });
+            // hide/remove button (similar to vehicles)
+            const removeBtn = document.createElement("div");
+            removeBtn.className = "role-btn hide-role-btn";
+            removeBtn.textContent = "|";
+            removeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                roleObj.hidden = !roleObj.hidden;
+                saveFactions();
+                renderTechTree();
+            });
+            roleLabel.appendChild(removeBtn);
+
+            // small edit button to modify class properties
+            const editRoleBtn = document.createElement("div");
+            editRoleBtn.className = "role-btn edit-role-btn";
+            editRoleBtn.textContent = "✏";
+            editRoleBtn.draggable = false;
+            editRoleBtn.addEventListener('mousedown', e => e.stopPropagation());
+            editRoleBtn.onclick = (e) => {
+                e.stopPropagation();
+                openClassModal(roleIndex);
+            };
+            roleLabel.appendChild(editRoleBtn);
+        }
+
+        container.appendChild(roleLabel);
+
+        for (let tier = 1; tier <= 12; tier++) {
+
+            const cell = document.createElement("div");
+            cell.className = "tier-cell";
+            cell.style.background = ""; // remove any inherited gradient
+
+            const vehiclesInCell = faction.techTree[tier]
+                .map((v, i) => ({ ...v, index: i }))
+                .filter(v => v.class === role);
+
+            vehiclesInCell.forEach(vehicle => {
+
+                if (vehicle.hidden && !editMode) return;
+
+                const tank = document.createElement("div");
+                tank.className = "tank-box";
+                tank.style.borderColor = getRoleBorderColor(roleObj, role);
+                const vehicleId = vehicle.id;
+                if (vehicleId) {
+                    tank.dataset.vehicleId = vehicleId;
+                    visibleVehicleElements.set(vehicleId, tank);
+                    visibleVehiclesById.set(vehicleId, vehicle);
+                }
+                let imgUrl = "";
+                if (vehicle.images && vehicle.images.length) {
+                    imgUrl = vehicle.images[vehicle.preview || 0] || "";
+                } else {
+                    imgUrl = vehicle.image || "";
+                }
+                tank.style.backgroundImage = `url(${imgUrl})`;
+
+                if (vehicle.hidden && editMode) {
+                    tank.style.opacity = "0.35";
+                }
+
+                const nameTag = document.createElement("div");
+                nameTag.className = "tank-name";
+                nameTag.textContent = vehicle.name;
+                tank.appendChild(nameTag);
+
+                // tooltip popup on hover (only when not in edit mode, but can show anyway)
+                tank.addEventListener('mouseenter', () => {
+                    if (vehicle.id) {
+                        setHoveredVehicleLinks(vehicle.id);
+                        setHoveredVehicleCards(vehicle.id);
+                    }
+                });
+                tank.addEventListener('mouseleave', () => {
+                    setHoveredVehicleLinks(null);
+                    setHoveredVehicleCards(null);
+                });
+
+                tank.addEventListener('click', (e) => {
+                    if (editMode) return;
+                    e.stopPropagation();
+                    openVehicleDetailWindow(vehicle, tier, role, tank);
+                });
+
+                if (editMode) {
+
+                    // REMOVE / HIDE BUTTON
+                    const removeBtn = document.createElement("div");
+                    removeBtn.className = "remove-btn";
+                    removeBtn.textContent = "-";
+
+                    removeBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        faction.techTree[tier][vehicle.index].hidden = 
+                            !faction.techTree[tier][vehicle.index].hidden;
+                        saveFactions();
+                        renderTechTree();
+                    });
+
+                    tank.appendChild(removeBtn);
+
+                    // EDIT BUTTON
+                    const editBtn = document.createElement("div");
+                    editBtn.className = "edit-vehicle-btn";
+                    editBtn.textContent = "✏";
+
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation();
+
+                        editingVehicle = vehicle;
+                        editingTier = tier;
+                        editingIndex = vehicle.index;
+
+                        document.getElementById("vehicleName").value = vehicle.name;
+                        document.getElementById("vehicleClass").value = vehicle.class;
+                        document.getElementById("modalTitle").textContent = "Edit Vehicle";
+
+                        openModal(tier);
+                    };
+
+                    tank.appendChild(editBtn);
+                }
+
+                cell.appendChild(tank);
+            });
+
+            // Add button
+            if (editMode) {
+                const addBtn = document.createElement("div");
+                addBtn.className = "add-btn";
+                addBtn.textContent = "+";
+                addBtn.onclick = () => openModal(tier);
+                cell.appendChild(addBtn);
+            }
+
+            container.appendChild(cell);
+        }
+    });
+
+    drawVehicleLinks(container, visibleVehicleElements, visibleVehiclesById);
+}
+
+function saveFactions() {
+    TechTreeStorage.setFactions(factions).catch(err => {
+        console.error("Failed to save factions:", err);
+    });
+    updateStorageUsageIndicator();
+}
+
+function refreshAfterDataChange() {
+    faction = factions.find(f => f.id === currentId);
+    if (faction) {
+        ensureVehicleIds();
+        setFactionTitle();
+        renderTechTree();
+    } else {
+        document.body.innerHTML = "<h1>Faction Not Found</h1><a href='index.html'>Back</a>";
+    }
+}
+
+function downloadJsonFile(data, fileName) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+function safeFileName(name) {
+    return (name || 'tech-tree').replace(/[^a-z0-9_-]+/gi, '-').replace(/-+/g, '-').toLowerCase();
+}
+
+function normalizeImportedPayload(parsed) {
+    if (!parsed || typeof parsed !== 'object') return null;
+    if (parsed.techTree && typeof parsed.techTree === 'object') {
+        return {
+            roles: Array.isArray(parsed.roles) ? parsed.roles : null,
+            techTree: parsed.techTree
+        };
+    }
+    return null;
+}
+
+function updateImagePreviews() {
+    const container = document.getElementById("imagePreviewContainer");
+    if (!container) return;
+    container.innerHTML = "";
+    modalImages.forEach((src, idx) => {
+        const img = document.createElement("img");
+        img.src = src;
+        img.className = "image-thumb" + (idx === modalPreviewIndex ? " selected" : "");
+        img.onclick = () => {
+            modalPreviewIndex = idx;
+            updateImagePreviews();
+            toggleSaveState();
+        };
+        container.appendChild(img);
+    });
+}
+
+function toggleSaveState() {
+    const btn = document.getElementById("createVehicle");
+    if (!btn) return;
+    if (pendingImageReads > 0) {
+        btn.disabled = true;
+        btn.textContent = "Loading images...";
+        return;
+    }
+    if (modalImages.length > 1 && (modalPreviewIndex === null || modalPreviewIndex === undefined)) {
+        btn.disabled = true;
+        btn.textContent = "Select preview";
+    } else {
+        btn.disabled = false;
+        btn.textContent = "SAVE";
+    }
+}
+
+function openModal(tier) {
+    if (!editMode) return;
+    selectedTier = tier;
+    // refresh class dropdown to reflect any role changes
+    updateClassSelect(editingVehicle ? editingVehicle.class : null);
+    document.getElementById("vehicleModal").classList.remove("hidden");
+    const linksPanel = document.getElementById("linksDropdownPanel");
+    const linksSearch = document.getElementById("vehicleLinksSearch");
+    if (linksPanel) linksPanel.classList.add("hidden");
+    if (linksSearch) linksSearch.value = "";
+    // prepare state for edit or new
+    if (editingVehicle) {
+        document.getElementById("vehicleName").value = editingVehicle.name || "";
+        document.getElementById("vehicleClass").value = editingVehicle.class || vehicleRoles[0];
+        document.getElementById("vehicleTier").value = String(editingTier || tier || 1);
+        document.getElementById("vehicleDesc").value = editingVehicle.description || "";
+        document.getElementById("vehicleHull").value = editingVehicle.hull || "";
+        document.getElementById("vehicleTurret").value = editingVehicle.turret || "";
+        document.getElementById("vehicleGun").value = editingVehicle.gun || "";
+        modalLinkedIds = Array.isArray(editingVehicle.links) ? editingVehicle.links.slice() : [];
+        // load images from existing vehicle
+        if (editingVehicle.images && editingVehicle.images.length) {
+            modalImages = editingVehicle.images.slice();
+            modalPreviewIndex = editingVehicle.preview || 0;
+        } else if (editingVehicle.image) {
+            modalImages = [editingVehicle.image];
+            modalPreviewIndex = 0;
+        } else {
+            modalImages = [];
+            modalPreviewIndex = null;
+        }
+        const removeVehicleBtn = document.getElementById("removeVehicle");
+        if (removeVehicleBtn) removeVehicleBtn.style.display = "block";
+    } else {
+        document.getElementById("vehicleTier").value = String(tier || 1);
+        modalImages = [];
+        document.getElementById("vehicleHull").value = "";
+        document.getElementById("vehicleTurret").value = "";
+        document.getElementById("vehicleGun").value = "";
+        modalLinkedIds = [];
+        modalPreviewIndex = null;
+        const removeVehicleBtn = document.getElementById("removeVehicle");
+        if (removeVehicleBtn) removeVehicleBtn.style.display = "none";
+    }
+    renderVehicleLinksList(editingVehicle ? editingVehicle.id : null);
+    updateLinksDropdownLabel();
+    updateImagePreviews();
+    toggleSaveState();
+}
+
+function updateClassSelect(selected) {
+    const sel = document.getElementById("vehicleClass");
+    sel.innerHTML = "";
+    faction.roles.forEach(r => {
+        const opt = document.createElement("option");
+        opt.textContent = r.name;
+        opt.value = r.name;
+        sel.appendChild(opt);
+    });
+    if (selected) sel.value = selected;
+}
+
+function resetModal() {
+    document.getElementById("vehicleModal").classList.add("hidden");
+    updateClassSelect();
+    document.getElementById("vehicleName").value = "";
+    document.getElementById("vehicleDesc").value = "";
+    document.getElementById("vehicleTier").value = "1";
+    document.getElementById("vehicleHull").value = "";
+    document.getElementById("vehicleTurret").value = "";
+    document.getElementById("vehicleGun").value = "";
+    document.getElementById("vehicleImages").value = "";
+    document.getElementById("modalTitle").textContent = "Create Vehicle";
+    const removeVehicleBtn = document.getElementById("removeVehicle");
+    if (removeVehicleBtn) removeVehicleBtn.style.display = "none";
+    const removeProgress = document.getElementById("holdDeleteVehicleProgress");
+    if (removeProgress) removeProgress.style.width = "0%";
+    const linksPanel = document.getElementById("linksDropdownPanel");
+    const linksSearch = document.getElementById("vehicleLinksSearch");
+    if (linksPanel) linksPanel.classList.add("hidden");
+    if (linksSearch) linksSearch.value = "";
+    editingVehicle = null;
+    editingTier = null;
+    editingIndex = null;
+    modalImages = [];
+    modalLinkedIds = [];
+    modalPreviewIndex = null;
+    expectedImageCount = 0;
+    pendingImageReads = 0;
+    updateImagePreviews();
+    updateLinksDropdownLabel();
+    toggleSaveState();
+}
+
+document.getElementById("cancelVehicle").onclick = resetModal;
+
+const removeVehicleBtn = document.getElementById("removeVehicle");
+if (removeVehicleBtn) {
+    let holdDeleteVehicleTimer = null;
+    let holdDeleteVehicleInterval = null;
+
+    function deleteEditingVehicle() {
+        if (editingTier === null || editingIndex === null) return;
+        if (!Array.isArray(faction.techTree[editingTier])) return;
+        faction.techTree[editingTier].splice(editingIndex, 1);
+        saveFactions();
+        renderTechTree();
+        resetModal();
+    }
+
+    function resetHoldDeleteVehicleVisual() {
+        const progress = document.getElementById("holdDeleteVehicleProgress");
+        if (progress) progress.style.width = "0%";
+    }
+
+    function stopHoldDeleteVehicle() {
+        if (holdDeleteVehicleTimer) {
+            clearTimeout(holdDeleteVehicleTimer);
+            holdDeleteVehicleTimer = null;
+        }
+        if (holdDeleteVehicleInterval) {
+            clearInterval(holdDeleteVehicleInterval);
+            holdDeleteVehicleInterval = null;
+        }
+        resetHoldDeleteVehicleVisual();
+    }
+
+    function startHoldDeleteVehicle() {
+        if (editingTier === null || editingIndex === null) return;
+        stopHoldDeleteVehicle();
+        const duration = 4000;
+        const start = Date.now();
+        const progress = document.getElementById("holdDeleteVehicleProgress");
+
+        holdDeleteVehicleInterval = setInterval(() => {
+            const elapsed = Date.now() - start;
+            const pct = Math.max(0, Math.min(100, (elapsed / duration) * 100));
+            if (progress) progress.style.width = pct + "%";
+        }, 40);
+
+        holdDeleteVehicleTimer = setTimeout(() => {
+            stopHoldDeleteVehicle();
+            deleteEditingVehicle();
+        }, duration);
+    }
+
+    removeVehicleBtn.addEventListener("mousedown", startHoldDeleteVehicle);
+    removeVehicleBtn.addEventListener("mouseup", stopHoldDeleteVehicle);
+    removeVehicleBtn.addEventListener("mouseleave", stopHoldDeleteVehicle);
+    removeVehicleBtn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        startHoldDeleteVehicle();
+    }, { passive: false });
+    removeVehicleBtn.addEventListener("touchend", stopHoldDeleteVehicle);
+    removeVehicleBtn.addEventListener("touchcancel", stopHoldDeleteVehicle);
+}
+
+// open class modal when add button clicked
+let editingClassIndex = null;
+function resetClassModal() {
+    document.getElementById("classModal").classList.add("hidden");
+    document.getElementById("className").value = "";
+    document.getElementById("classColor").value = "#ffffff";
+    document.getElementById("colorPreview").style.background = gradientFromColor('#ffffff');
+    const removeBtn = document.getElementById("removeClass");
+    if (removeBtn) removeBtn.style.display = "none";
+    const removeProgress = document.getElementById("holdDeleteClassProgress");
+    if (removeProgress) removeProgress.style.width = "0%";
+    editingClassIndex = null;
+}
+
+function openClassModal(editIdx = null) {
+    editingClassIndex = editIdx;
+    const removeBtn = document.getElementById("removeClass");
+    if (editIdx !== null) {
+        const obj = faction.roles[editIdx];
+        document.getElementById("className").value = obj.name;
+        document.getElementById("classColor").value = obj.color || '#ffffff';
+        document.getElementById("colorPreview").style.background = gradientFromColor(obj.color || '#ffffff');
+        document.getElementById("classModalTitle").textContent = "Edit Class";
+        if (removeBtn) removeBtn.style.display = "block";
+    } else {
+        document.getElementById("classModalTitle").textContent = "New Class";
+        if (removeBtn) removeBtn.style.display = "none";
+    }
+    document.getElementById("classModal").classList.remove("hidden");
+}
+
+document.getElementById("addClassBtn").onclick = () => {
+    openClassModal();
+};
+
+document.getElementById("classColor").addEventListener('input', (e) => {
+    const col = e.target.value;
+    document.getElementById("colorPreview").style.background = gradientFromColor(col);
+});
+
+document.getElementById("cancelClass").onclick = resetClassModal;
+
+document.getElementById("saveClass").onclick = () => {
+    const name = document.getElementById("className").value.trim();
+    const color = document.getElementById("classColor").value;
+    if (!name) return;
+    const entry = { name, hidden: false, color };
+    if (editingClassIndex !== null) {
+        const previousName = faction.roles[editingClassIndex]?.name;
+        faction.roles[editingClassIndex] = entry;
+        if (previousName && previousName !== name) {
+            for (let tier = 1; tier <= 12; tier++) {
+                const vehicles = faction.techTree[tier] || [];
+                vehicles.forEach(vehicle => {
+                    if (vehicle.class === previousName) {
+                        vehicle.class = name;
+                    }
+                });
+            }
+        }
+    } else {
+        faction.roles.push(entry);
+    }
+    saveFactions();
+    renderTechTree();
+    resetClassModal();
+};
+
+const removeClassBtn = document.getElementById("removeClass");
+if (removeClassBtn) {
+    let holdDeleteClassTimer = null;
+    let holdDeleteClassInterval = null;
+
+    function deleteEditingClass() {
+        if (editingClassIndex === null) return;
+        faction.roles.splice(editingClassIndex, 1);
+        saveFactions();
+        renderTechTree();
+        resetClassModal();
+    }
+
+    function resetHoldDeleteClassVisual() {
+        const progress = document.getElementById("holdDeleteClassProgress");
+        if (progress) progress.style.width = "0%";
+    }
+
+    function stopHoldDeleteClass() {
+        if (holdDeleteClassTimer) {
+            clearTimeout(holdDeleteClassTimer);
+            holdDeleteClassTimer = null;
+        }
+        if (holdDeleteClassInterval) {
+            clearInterval(holdDeleteClassInterval);
+            holdDeleteClassInterval = null;
+        }
+        resetHoldDeleteClassVisual();
+    }
+
+    function startHoldDeleteClass() {
+        if (editingClassIndex === null) return;
+        stopHoldDeleteClass();
+        const duration = 4000;
+        const start = Date.now();
+        const progress = document.getElementById("holdDeleteClassProgress");
+
+        holdDeleteClassInterval = setInterval(() => {
+            const elapsed = Date.now() - start;
+            const pct = Math.max(0, Math.min(100, (elapsed / duration) * 100));
+            if (progress) progress.style.width = pct + "%";
+        }, 40);
+
+        holdDeleteClassTimer = setTimeout(() => {
+            stopHoldDeleteClass();
+            deleteEditingClass();
+        }, duration);
+    }
+
+    removeClassBtn.addEventListener("mousedown", startHoldDeleteClass);
+    removeClassBtn.addEventListener("mouseup", stopHoldDeleteClass);
+    removeClassBtn.addEventListener("mouseleave", stopHoldDeleteClass);
+    removeClassBtn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        startHoldDeleteClass();
+    }, { passive: false });
+    removeClassBtn.addEventListener("touchend", stopHoldDeleteClass);
+    removeClassBtn.addEventListener("touchcancel", stopHoldDeleteClass);
+}
+
+const imageInputElem = document.getElementById("vehicleImages");
+if (imageInputElem) {
+    imageInputElem.addEventListener("change", (e) => {
+        modalImages = [];
+        modalPreviewIndex = null;
+        const files = Array.from(e.target.files).slice(0, 5);
+        expectedImageCount = files.length;
+        pendingImageReads = files.length;
+        if (files.length === 1) {
+            modalPreviewIndex = 0;
+        }
+        toggleSaveState();
+        if (files.length === 0) {
+            updateImagePreviews();
+            return;
+        }
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const rawData = evt.target.result;
+                // immediately use raw data for quick thumbnail
+                modalImages.push(rawData);
+                pendingImageReads--;
+                updateImagePreviews();
+                if (pendingImageReads === 0) {
+                    toggleSaveState();
+                }
+                // asynchronously resize in background, replace value when done
+                resizeDataUrl(rawData, 800, (resized) => {
+                    const idx = modalImages.indexOf(rawData);
+                    if (idx !== -1) {
+                        modalImages[idx] = resized;
+                        // if the replaced image was selected preview, nothing changes
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+}
+
+// helper performing the actual data mutation and storage
+function performSave(data, targetTier) {
+    const tierNum = Number(targetTier);
+    const safeTier = Number.isInteger(tierNum) && tierNum >= 1 && tierNum <= 12 ? tierNum : (editingTier || selectedTier || 1);
+
+    if (editingVehicle !== null) {
+        const vehicleRef = faction.techTree[editingTier][editingIndex];
+        if (!vehicleRef.id) {
+            vehicleRef.id = generateVehicleId();
+        }
+        vehicleRef.name = data.name;
+        vehicleRef.class = data.class;
+        vehicleRef.description = data.description;
+        vehicleRef.links = Array.isArray(data.links) ? data.links : [];
+        if ('hull' in data) vehicleRef.hull = data.hull;
+        if ('turret' in data) vehicleRef.turret = data.turret;
+        if ('gun' in data) vehicleRef.gun = data.gun;
+        if (data.images) {
+            vehicleRef.images = data.images;
+            vehicleRef.preview = data.preview;
+            delete vehicleRef.image;
+        }
+
+        if (safeTier !== editingTier) {
+            faction.techTree[editingTier].splice(editingIndex, 1);
+            faction.techTree[safeTier].push(vehicleRef);
+        }
+    } else {
+        faction.techTree[safeTier].push(data);
+    }
+    saveFactions();
+    renderTechTree();
+}
+
+// make handler async to allow awaiting compression retry
+document.getElementById("createVehicle").onclick = async () => {
+    try {
+        const name = document.getElementById("vehicleName").value.trim();
+        const vehicleClass = document.getElementById("vehicleClass").value;
+        const chosenTier = parseInt(document.getElementById("vehicleTier").value, 10);
+
+        if (!name) return;
+
+        if (modalImages.length > 1 && (modalPreviewIndex === null || modalPreviewIndex === undefined)) {
+            alert("Please select a preview image before saving.");
+            return;
+        }
+
+        const newData = { name: name, class: vehicleClass, description: document.getElementById("vehicleDesc").value.trim() };
+        if (editingVehicle && editingVehicle.id) {
+            newData.id = editingVehicle.id;
+        } else {
+            newData.id = generateVehicleId();
+        }
+        newData.links = modalLinkedIds.slice();
+        const hullVal = document.getElementById("vehicleHull").value.trim();
+        const turretVal = document.getElementById("vehicleTurret").value.trim();
+        const gunVal = document.getElementById("vehicleGun").value.trim();
+        if (hullVal) newData.hull = hullVal;
+        if (turretVal) newData.turret = turretVal;
+        if (gunVal) newData.gun = gunVal;
+        if (modalImages.length) {
+            newData.images = modalImages.slice();
+            newData.preview = modalPreviewIndex || 0;
+        }
+
+        try {
+            performSave(newData, chosenTier);
+        } catch (err) {
+            // if quota issue and we have images, try compressing further
+            if ((err.name === 'QuotaExceededError' || err.message.includes('quota')) && newData.images && newData.images.length) {
+                const smaller = await reduceImagesForQuota(newData.images);
+                newData.images = smaller;
+                // try again once
+                performSave(newData, chosenTier);
+            } else {
+                throw err;
+            }
+        }
+    } catch (err) {
+        console.error("Error saving vehicle:", err);
+        if (err.name === 'QuotaExceededError' || err.message.includes('quota')) {
+            alert("Storage quota exceeded. Try using fewer or smaller images.");
+        } else {
+            alert("Failed to save vehicle: " + (err.message || err));
+        }
+    } finally {
+        resetModal();
+    }
+};
+
+document.getElementById("editToggle").onclick = () => {
+    editMode = !editMode;
+    document.body.classList.toggle("edit-mode", editMode);
+    playEditModeFlash();
+    document.getElementById("editToggle").style.color = editMode ? "#4CAF50" : "#aaa";
+    document.getElementById("addClassBtn").style.display = editMode ? "inline" : "none";
+    if (editMode) closeAllVehicleDetailWindows();
+    renderTechTree();
+};
+
+function playEditModeFlash() {
+    document.body.classList.remove("edit-mode-flash");
+    void document.body.offsetWidth;
+    document.body.classList.add("edit-mode-flash");
+    setTimeout(() => {
+        document.body.classList.remove("edit-mode-flash");
+    }, 1000);
+}
+
+function goBack() {
+    window.location.href = "index.html";
+}
+
+document.getElementById("exportBtn").onclick = () => {
+    if (!faction) return;
+
+    const payload = {
+        format: "tech-tree-composition-v1",
+        exportedAt: new Date().toISOString(),
+        roles: Array.isArray(faction.roles) ? faction.roles : [],
+        techTree: faction.techTree || {}
+    };
+    downloadJsonFile(
+        payload,
+        `${safeFileName(faction.name)}-tech-tree-composition-${new Date().toISOString().slice(0, 10)}.json`
+    );
+};
+
+document.getElementById("importBtn").onclick = () => {
+    const input = document.getElementById("importJsonInput");
+    if (!input) return;
+    input.value = "";
+    input.click();
+};
+
+document.getElementById("importJsonInput").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const parsed = JSON.parse(reader.result);
+            const normalized = normalizeImportedPayload(parsed);
+            if (!normalized) {
+                alert("Invalid JSON format. Expected a tech tree composition object with techTree.");
+                return;
+            }
+
+            const confirmed = confirm("This will replace ONLY the current faction tech tree composition. Continue?");
+            if (!confirmed) return;
+
+            if (!faction) {
+                alert("No active faction selected.");
+                return;
+            }
+
+            if (normalized.roles) {
+                faction.roles = normalized.roles;
+            }
+            faction.techTree = normalized.techTree;
+
+            for (let i = 1; i <= 12; i++) {
+                if (!Array.isArray(faction.techTree[i])) {
+                    faction.techTree[i] = [];
+                }
+            }
+
+            saveFactions();
+            refreshAfterDataChange();
+            alert("Import complete for current faction.");
+        } catch (err) {
+            alert("Failed to import JSON: " + (err.message || err));
+        }
+    };
+    reader.readAsText(file);
+});
+
+window.addEventListener('resize', () => {
+    if (faction) renderTechTree();
+    closeAllVehicleDetailWindows();
+});
+</script>
+
+</body>
+</html>

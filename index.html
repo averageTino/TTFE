@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Faction Creator</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+    <script src="storage.js"></script>
+</head>
+<body>
+<div class="index-page">
+    <img src="content/TTFE banner.png" alt="TTFE Banner" class="index-header-banner">
+    <div class="index-card">
+        <h1 class="index-title">Faction Creator</h1>
+
+        <div class="index-create-row">
+            <input type="text" id="factionName" class="index-input" placeholder="Faction Name">
+            <button id="openColorPickerBtn" type="button" class="index-primary-btn">COLOR</button>
+            <button id="openIconPickerBtn" type="button" class="index-primary-btn">ICON</button>
+            <button onclick="addFaction()" class="index-primary-btn">Add Faction</button>
+            <input type="color" id="createFactionColorPicker" value="#ffffff" style="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;border:0;padding:0;pointer-events:none;">
+        </div>
+
+        <ul id="factionList" class="index-faction-list"></ul>
+    </div>
+</div>
+
+<div class="index-footer">
+    <span class="index-footer-version">Version 0.1</span>
+    <span class="index-footer-center">@averagetino at discord for suggestions / bug reports</span>
+    <span class="index-footer-disclaimer">Disclaimer: All of this was codevibed to the top; kerfuffle is expected.</span>
+</div>
+
+<div id="iconPickerModal" class="modal hidden">
+    <div class="modal-content index-icon-modal-content">
+        <h2>Select Faction Icon</h2>
+        <div id="iconPickerGrid" class="index-icon-grid"></div>
+        <div class="modal-buttons">
+            <button id="customIconUploadBtn" type="button" title="Best resolution: 256 x 128px">Custom Icon</button>
+            <button id="closeIconPicker" type="button">Close</button>
+        </div>
+        <input type="file" id="customIconFileInput" accept="image/*" style="display:none;">
+    </div>
+</div>
+
+<div id="factionEditModal" class="modal hidden">
+    <div class="modal-content index-edit-modal-content">
+        <h2>Edit Faction</h2>
+
+        <label>Name</label>
+        <input type="text" id="editFactionName" class="index-input">
+
+        <label>Icon</label>
+        <button id="editIconBtn" type="button" class="index-primary-btn">ICON</button>
+
+        <label>Color</label>
+        <input type="color" id="editFactionColor" value="#ffffff">
+        <div id="editColorPreview" class="color-preview"></div>
+
+        <div class="modal-buttons">
+            <button id="saveFactionEdit" type="button">Save</button>
+            <button id="cancelFactionEdit" type="button">Cancel</button>
+        </div>
+
+        <button id="holdDeleteFaction" type="button" class="hold-delete-btn">
+            <span class="hold-delete-label">Hold 4s to Delete</span>
+            <span class="hold-delete-progress" id="holdDeleteProgress"></span>
+        </button>
+    </div>
+</div>
+
+<script>
+let factions = [];
+let selectedFactionFlag = "";
+let selectedFactionColor = "#ffffff";
+let editingFactionIndex = null;
+let editFactionFlag = "";
+let iconPickerTarget = "create";
+let holdDeleteTimer = null;
+let holdDeleteInterval = null;
+const CUSTOM_FLAG_PREFIX = "custom:";
+
+const flagSvgFiles = [
+    "ad.svg","ae.svg","af.svg","ag.svg","ai.svg","al.svg","am.svg","ao.svg","aq.svg","ar.svg","arab.svg","as.svg","asean.svg","at.svg","au.svg","aw.svg","ax.svg","az.svg","ba.svg","bb.svg","bd.svg","be.svg","bf.svg","bg.svg","bh.svg","bi.svg","bj.svg","bl.svg","bm.svg","bn.svg","bo.svg","bq.svg","br.svg","bs.svg","bt.svg","bv.svg","bw.svg","by.svg","bz.svg","ca.svg","cc.svg","cd.svg","cefta.svg","cf.svg","cg.svg","ch.svg","ci.svg","ck.svg","cl.svg","cm.svg","cn.svg","co.svg","cp.svg","cr.svg","cu.svg","cv.svg","cw.svg","cx.svg","cy.svg","cz.svg","de.svg","dg.svg","dj.svg","dk.svg","dm.svg","do.svg","dz.svg","eac.svg","ec.svg","ee.svg","eg.svg","eh.svg","er.svg","es-ct.svg","es-ga.svg","es-pv.svg","es.svg","et.svg","eu.svg","fi.svg","fj.svg","fk.svg","fm.svg","fo.svg","fr.svg","ga.svg","gb-eng.svg","gb-nir.svg","gb-sct.svg","gb-wls.svg","gb.svg","gd.svg","ge.svg","gf.svg","gg.svg","gh.svg","gi.svg","gl.svg","gm.svg","gn.svg","gp.svg","gq.svg","gr.svg","gs.svg","gt.svg","gu.svg","gw.svg","gy.svg","hk.svg","hm.svg","hn.svg","hr.svg","ht.svg","hu.svg","ic.svg","id.svg","ie.svg","il.svg","im.svg","in.svg","io.svg","iq.svg","ir.svg","is.svg","it.svg","je.svg","jm.svg","jo.svg","jp.svg","ke.svg","kg.svg","kh.svg","ki.svg","km.svg","kn.svg","kp.svg","kr.svg","kw.svg","ky.svg","kz.svg","la.svg","lb.svg","lc.svg","li.svg","lk.svg","lr.svg","ls.svg","lt.svg","lu.svg","lv.svg","ly.svg","ma.svg","mc.svg","md.svg","me.svg","mf.svg","mg.svg","mh.svg","mk.svg","ml.svg","mm.svg","mn.svg","mo.svg","mp.svg","mq.svg","mr.svg","ms.svg","mt.svg","mu.svg","mv.svg","mw.svg","mx.svg","my.svg","mz.svg","na.svg","nc.svg","ne.svg","nf.svg","ng.svg","ni.svg","nl.svg","no.svg","np.svg","nr.svg","nu.svg","nz.svg","om.svg","pa.svg","pc.svg","pe.svg","pf.svg","pg.svg","ph.svg","pk.svg","pl.svg","pm.svg","pn.svg","pr.svg","ps.svg","pt.svg","pw.svg","py.svg","qa.svg","re.svg","ro.svg","rs.svg","ru.svg","rw.svg","sa.svg","sb.svg","sc.svg","sd.svg","se.svg","sg.svg","sh-ac.svg","sh-hl.svg","sh-ta.svg","sh.svg","si.svg","sj.svg","sk.svg","sl.svg","sm.svg","sn.svg","so.svg","sr.svg","ss.svg","st.svg","sv.svg","sx.svg","sy.svg","sz.svg","tc.svg","td.svg","tf.svg","tg.svg","th.svg","tj.svg","tk.svg","tl.svg","tm.svg","tn.svg","to.svg","tr.svg","tt.svg","tv.svg","tw.svg","tz.svg","ua.svg","ug.svg","um.svg","un.svg","us.svg","uy.svg","uz.svg","va.svg","vc.svg","ve.svg","vg.svg","vi.svg","vn.svg","vu.svg","wf.svg","ws.svg","xk.svg","xx.svg","ye.svg","yt.svg","za.svg","zm.svg","zw.svg"
+];
+flagSvgFiles.push("256px-Flag_of_the_Soviet_Union.svg.png");
+const flagSvgSet = new Set(flagSvgFiles);
+
+function flagLabelFromFile(fileName) {
+    return fileName.replace(/\.svg$/i, '').toUpperCase();
+}
+
+function normalizeFlagValue(flagValue) {
+    if (!flagValue) return "";
+    const raw = String(flagValue);
+    if (raw.startsWith(CUSTOM_FLAG_PREFIX)) return raw;
+    if (raw.startsWith("data:image/")) return `${CUSTOM_FLAG_PREFIX}${raw}`;
+    if (flagSvgSet.has(raw)) return raw;
+    const asCode = `${raw.toLowerCase()}.svg`;
+    if (flagSvgSet.has(asCode)) return asCode;
+    return "";
+}
+
+function getFlagSrc(flagValue) {
+    const normalized = normalizeFlagValue(flagValue);
+    if (!normalized) return "";
+    if (normalized.startsWith(CUSTOM_FLAG_PREFIX)) {
+        return normalized.slice(CUSTOM_FLAG_PREFIX.length);
+    }
+    return `content/${normalized}`;
+}
+
+function hexToRgb(hex) {
+    let value = String(hex || "#ffffff");
+    if (value.startsWith('#')) value = value.slice(1);
+    if (value.length === 3) value = value.split('').map(c => c + c).join('');
+    const num = parseInt(value, 16);
+    return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+    };
+}
+
+function gradientFromColor(hex) {
+    const { r, g, b } = hexToRgb(hex);
+    return `linear-gradient(to right, rgba(${r},${g},${b},0.30), rgba(${r},${g},${b},0.15), rgba(${r},${g},${b},0.05), rgba(${r},${g},${b},0))`;
+}
+
+function saveFactions() {
+    TechTreeStorage.setFactions(factions).catch(err => {
+        console.error("Failed to save factions:", err);
+    });
+}
+
+function warnIfIndexedDbUnavailable() {
+    if (TechTreeStorage.useIndexedDB) return;
+    const key = "tt-idb-unavailable-warned";
+    try {
+        if (sessionStorage.getItem(key) === "1") return;
+        sessionStorage.setItem(key, "1");
+    } catch {
+    }
+    alert("IndexedDB is unavailable in this browser/session. The app is running in limited fallback mode (localStorage), so large saved data may be inaccessible or hit low storage limits.");
+}
+
+function generateId() {
+    return Date.now().toString();
+}
+
+function renderFactions() {
+    const list = document.getElementById("factionList");
+    list.innerHTML = "";
+    let changed = false;
+
+    factions.forEach((faction, index) => {
+
+        const li = document.createElement("li");
+        li.className = "index-faction-item";
+        if (!faction.color) {
+            faction.color = "#ffffff";
+            changed = true;
+        }
+        if (faction.color.toLowerCase() !== "#ffffff") {
+            li.style.background = gradientFromColor(faction.color);
+        }
+
+        // Clickable name
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "index-faction-name";
+        const normalizedFlag = normalizeFlagValue(faction.flag);
+        if ((faction.flag || "") !== normalizedFlag) {
+            faction.flag = normalizedFlag;
+            changed = true;
+        }
+
+        if (normalizedFlag) {
+            const flagImg = document.createElement("img");
+            flagImg.className = "index-flag-icon";
+            flagImg.src = getFlagSrc(normalizedFlag);
+            flagImg.alt = normalizedFlag;
+            nameSpan.appendChild(flagImg);
+        }
+
+        const nameText = document.createElement("span");
+        nameText.textContent = faction.name;
+        nameSpan.appendChild(nameText);
+
+        nameSpan.onclick = () => openFaction(faction.id);
+
+        const actions = document.createElement("div");
+        actions.className = "index-faction-actions";
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "index-action-btn";
+        editBtn.textContent = "✏";
+        editBtn.onclick = (e) => {
+            e.stopPropagation();
+            openFactionEditModal(index);
+        };
+
+        actions.appendChild(editBtn);
+
+        li.appendChild(nameSpan);
+        li.appendChild(actions);
+
+        list.appendChild(li);
+    });
+
+    if (changed) saveFactions();
+}
+
+function addFaction() {
+    const input = document.getElementById("factionName");
+    if (input.value.trim() === "") return;
+
+    factions.push({
+        id: generateId(),
+        name: input.value.trim(),
+        flag: selectedFactionFlag || "",
+        color: selectedFactionColor || "#ffffff",
+        techTree: {}
+    });
+
+    input.value = "";
+    saveFactions();
+    renderFactions();
+}
+
+async function openFaction(id) {
+    await TechTreeStorage.setCurrentFaction(id);
+    window.location.href = "techtree.html";
+}
+
+function updateIconButtonLabel() {
+    const btn = document.getElementById("openIconPickerBtn");
+    if (!btn) return;
+    btn.innerHTML = "";
+
+    if (selectedFactionFlag) {
+        const img = document.createElement("img");
+        img.className = "index-button-flag-icon";
+        img.src = getFlagSrc(selectedFactionFlag);
+        img.alt = selectedFactionFlag;
+        btn.appendChild(img);
+    }
+
+    const label = document.createElement("span");
+    label.textContent = "ICON";
+    btn.appendChild(label);
+}
+
+function updateCreateColorButtonLabel() {
+    const btn = document.getElementById("openColorPickerBtn");
+    if (!btn) return;
+    btn.innerHTML = "";
+
+    const swatch = document.createElement("span");
+    swatch.className = "index-button-color-dot";
+    swatch.style.background = selectedFactionColor || "#ffffff";
+    btn.appendChild(swatch);
+
+    const label = document.createElement("span");
+    label.textContent = "COLOR";
+    btn.appendChild(label);
+}
+
+function updateEditIconButtonLabel() {
+    const btn = document.getElementById("editIconBtn");
+    if (!btn) return;
+    btn.innerHTML = "";
+
+    if (editFactionFlag) {
+        const img = document.createElement("img");
+        img.className = "index-button-flag-icon";
+        img.src = getFlagSrc(editFactionFlag);
+        img.alt = editFactionFlag;
+        btn.appendChild(img);
+    }
+
+    const label = document.createElement("span");
+    label.textContent = "ICON";
+    btn.appendChild(label);
+}
+
+function renderIconPicker() {
+    const grid = document.getElementById("iconPickerGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    const currentFlag = iconPickerTarget === "edit" ? editFactionFlag : selectedFactionFlag;
+
+    flagSvgFiles.forEach(fileName => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "index-icon-option" + (currentFlag === fileName ? " selected" : "");
+
+        const img = document.createElement("img");
+        img.className = "index-option-flag-icon";
+        img.src = getFlagSrc(fileName);
+        img.alt = fileName;
+        option.appendChild(img);
+        option.onclick = () => {
+            applyPickedIcon(fileName);
+        };
+        grid.appendChild(option);
+    });
+}
+
+function openIconPicker(target = "create") {
+    iconPickerTarget = target;
+    renderIconPicker();
+    document.getElementById("iconPickerModal").classList.remove("hidden");
+}
+
+function closeIconPicker() {
+    document.getElementById("iconPickerModal").classList.add("hidden");
+}
+
+function applyPickedIcon(flagValue) {
+    const normalized = normalizeFlagValue(flagValue);
+    if (iconPickerTarget === "edit") {
+        editFactionFlag = normalized;
+        updateEditIconButtonLabel();
+    } else {
+        selectedFactionFlag = normalized;
+        updateIconButtonLabel();
+    }
+    renderIconPicker();
+    closeIconPicker();
+}
+
+function openFactionEditModal(index) {
+    const faction = factions[index];
+    if (!faction) return;
+    editingFactionIndex = index;
+    editFactionFlag = normalizeFlagValue(faction.flag);
+
+    document.getElementById("editFactionName").value = faction.name || "";
+    document.getElementById("editFactionColor").value = faction.color || "#ffffff";
+    document.getElementById("editColorPreview").style.background = gradientFromColor(faction.color || "#ffffff");
+    updateEditIconButtonLabel();
+    resetHoldDeleteVisual();
+    document.getElementById("factionEditModal").classList.remove("hidden");
+}
+
+function closeFactionEditModal() {
+    document.getElementById("factionEditModal").classList.add("hidden");
+    editingFactionIndex = null;
+    stopHoldDelete();
+}
+
+function saveFactionEdits() {
+    if (editingFactionIndex === null) return;
+    const faction = factions[editingFactionIndex];
+    if (!faction) return;
+
+    const newName = document.getElementById("editFactionName").value.trim();
+    const newColor = document.getElementById("editFactionColor").value || "#ffffff";
+    if (!newName) return;
+
+    faction.name = newName;
+    faction.flag = editFactionFlag || "";
+    faction.color = newColor;
+
+    saveFactions();
+    renderFactions();
+    closeFactionEditModal();
+}
+
+function deleteEditingFaction() {
+    if (editingFactionIndex === null) return;
+    factions.splice(editingFactionIndex, 1);
+    saveFactions();
+    renderFactions();
+    closeFactionEditModal();
+}
+
+function resetHoldDeleteVisual() {
+    const progress = document.getElementById("holdDeleteProgress");
+    if (progress) progress.style.width = "0%";
+}
+
+function stopHoldDelete() {
+    if (holdDeleteTimer) {
+        clearTimeout(holdDeleteTimer);
+        holdDeleteTimer = null;
+    }
+    if (holdDeleteInterval) {
+        clearInterval(holdDeleteInterval);
+        holdDeleteInterval = null;
+    }
+    resetHoldDeleteVisual();
+}
+
+function startHoldDelete() {
+    stopHoldDelete();
+    const duration = 4000;
+    const start = Date.now();
+    const progress = document.getElementById("holdDeleteProgress");
+
+    holdDeleteInterval = setInterval(() => {
+        const elapsed = Date.now() - start;
+        const pct = Math.max(0, Math.min(100, (elapsed / duration) * 100));
+        if (progress) progress.style.width = pct + "%";
+    }, 40);
+
+    holdDeleteTimer = setTimeout(() => {
+        stopHoldDelete();
+        deleteEditingFaction();
+    }, duration);
+}
+
+document.getElementById("openIconPickerBtn").onclick = () => openIconPicker("create");
+document.getElementById("openColorPickerBtn").onclick = () => {
+    const picker = document.getElementById("createFactionColorPicker");
+    const btn = document.getElementById("openColorPickerBtn");
+    if (!picker || !btn) return;
+    const rect = btn.getBoundingClientRect();
+    picker.style.left = `${Math.round(rect.left)}px`;
+    picker.style.top = `${Math.round(rect.bottom)}px`;
+    picker.focus({ preventScroll: true });
+    if (typeof picker.showPicker === "function") {
+        picker.showPicker();
+    } else {
+        picker.click();
+    }
+};
+document.getElementById("createFactionColorPicker").addEventListener("input", (e) => {
+    selectedFactionColor = e.target.value || "#ffffff";
+    updateCreateColorButtonLabel();
+});
+document.getElementById("closeIconPicker").onclick = closeIconPicker;
+document.getElementById("customIconUploadBtn").onclick = () => {
+    const input = document.getElementById("customIconFileInput");
+    if (!input) return;
+    input.value = "";
+    input.click();
+};
+document.getElementById("customIconFileInput").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type || !file.type.startsWith("image/")) {
+        alert("Please select an image file.");
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const dataUrl = String(reader.result || "");
+        if (!dataUrl.startsWith("data:image/")) {
+            alert("Failed to read image.");
+            return;
+        }
+        applyPickedIcon(`${CUSTOM_FLAG_PREFIX}${dataUrl}`);
+    };
+    reader.readAsDataURL(file);
+});
+document.getElementById("editIconBtn").onclick = () => openIconPicker("edit");
+document.getElementById("cancelFactionEdit").onclick = closeFactionEditModal;
+document.getElementById("saveFactionEdit").onclick = saveFactionEdits;
+document.getElementById("editFactionColor").addEventListener("input", (e) => {
+    const color = e.target.value || "#ffffff";
+    document.getElementById("editColorPreview").style.background = gradientFromColor(color);
+});
+
+const holdDeleteBtn = document.getElementById("holdDeleteFaction");
+holdDeleteBtn.addEventListener("mousedown", startHoldDelete);
+holdDeleteBtn.addEventListener("mouseup", stopHoldDelete);
+holdDeleteBtn.addEventListener("mouseleave", stopHoldDelete);
+holdDeleteBtn.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    startHoldDelete();
+}, { passive: false });
+holdDeleteBtn.addEventListener("touchend", stopHoldDelete);
+holdDeleteBtn.addEventListener("touchcancel", stopHoldDelete);
+
+async function initializeIndexData() {
+    factions = await TechTreeStorage.getFactions();
+    warnIfIndexedDbUnavailable();
+
+    if (factions.length > 0 && typeof factions[0] === "string") {
+        factions = factions.map(name => ({
+            id: Date.now().toString() + Math.random(),
+            name: name,
+            techTree: {}
+        }));
+        await TechTreeStorage.setFactions(factions);
+    }
+
+    renderFactions();
+    updateIconButtonLabel();
+    updateCreateColorButtonLabel();
+}
+
+initializeIndexData().catch(err => {
+    console.error("Failed to initialize index page:", err);
+    renderFactions();
+    updateIconButtonLabel();
+    updateCreateColorButtonLabel();
+});
+</script>
+
+</body>
+</html>

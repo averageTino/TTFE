@@ -1,0 +1,1004 @@
+html,
+body {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #1b1b1b;
+    color: white;
+    padding: 20px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+/* Buttons */
+button {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+/* ===== TOP BAR ===== */
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.top-spacer {
+    flex: 1;
+}
+
+.back-btn {
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 10px;
+    background: #262626;
+    border: 1px solid #3a3a3a;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #323232;
+}
+
+.edit-btn {
+    cursor: pointer;
+    color: #aaa;
+    font-weight: bold;
+}
+
+.edit-btn:hover {
+    color: white;
+}
+
+.storage-usage {
+    color: #9aa0a6;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.title-flag-icon {
+    width: 60px;
+    height: 42px;
+    object-fit: fill;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 2px;
+    background: rgba(0,0,0,0.25);
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* ===== TECH TREE GRID ===== */
+
+.tech-tree-grid {
+    display: grid;
+    grid-template-columns: 90px repeat(12, 1fr);
+    grid-template-rows: 34px;
+    grid-auto-rows: minmax(105px, auto);
+    gap: 3px;
+    padding: 20px 20px 8px;
+    justify-content: center;
+    align-content: stretch;
+    position: relative;
+    min-height: calc(100vh - 110px);
+    box-sizing: border-box;
+}
+
+/* Empty corner */
+.grid-corner {
+    background: transparent;
+}
+
+/* Tier Headers */
+.tier-header {
+    /* horizontal layout instead of vertical */
+    text-align: center;
+    font-weight: bold;
+    background: #1c1c1c;
+    padding: 8px 4px;
+    font-size: 12px;
+    letter-spacing: 0px; /* no extra spacing needed */
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Role Labels (Vertical Text) */
+.role-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    font-weight: bold;
+    font-size: 18px;
+    letter-spacing: 1px;
+    padding: 8px 4px;
+    color: #ddd;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Tier Cells */
+.tier-cell {
+    min-height: 105px;
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* edit mode styling */
+.edit-mode {
+    /* clay-blue to black gradient with subtle blueprint grid texture */
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' fill='none'%3E%3Crect width='40' height='40' fill='none' stroke='%2399b' stroke-width='0.5'/%3E%3C/svg%3E"),
+        linear-gradient(180deg, #4B6FA5 0%, #000 100%);
+    background-blend-mode: overlay;
+}
+
+.edit-mode-flash::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 500;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' fill='none'%3E%3Crect width='40' height='40' fill='none' stroke='%2399b' stroke-width='0.5'/%3E%3C/svg%3E"),
+        linear-gradient(180deg, #4B6FA5 0%, #000 100%);
+    background-blend-mode: overlay;
+    animation: editModeFlash 1s ease-out forwards;
+}
+
+@keyframes editModeFlash {
+    0% { opacity: 0; }
+    25% { opacity: 0.18; }
+    100% { opacity: 0; }
+}
+
+/* when editing, force row labels to white gradient and mute colors */
+.edit-mode .role-label {
+    background: linear-gradient(
+        to right,
+        rgba(255,255,255,0.30),
+        rgba(255,255,255,0.05)
+    ) !important;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0 4px rgba(255,255,255,0.7);
+}
+
+/* lighten tier cells as well in edit mode */
+.edit-mode .tier-cell {
+    background: rgba(255,255,255,0.05);
+}
+
+/* ===== ROW GRADIENTS (Soft + Fading) ===== */
+
+/* Heavy Tank - reddish brown (label only) */
+.role-label.Heavy-Tank {
+    background: linear-gradient(
+        to right,
+        rgba(123,63,0,0.30),
+        rgba(123,63,0,0.15),
+        rgba(123,63,0,0.05),
+        rgba(123,63,0,0)
+    );
+}
+
+/* Medium Tank - clay blue (label only) */
+.role-label.Medium-Tank {
+    background: linear-gradient(
+        to right,
+        rgba(75,111,165,0.30),
+        rgba(75,111,165,0.15),
+        rgba(75,111,165,0.05),
+        rgba(75,111,165,0)
+    );
+}
+
+/* Light Tank - clay green (label only) */
+.role-label.Light-Tank {
+    background: linear-gradient(
+        to right,
+        rgba(61,122,61,0.30),
+        rgba(61,122,61,0.15),
+        rgba(61,122,61,0.05),
+        rgba(61,122,61,0)
+    );
+}
+
+/* MBT - soft purple (label only) */
+.role-label.MBT {
+    background: linear-gradient(
+        to right,
+        rgba(120,60,160,0.30),
+        rgba(120,60,160,0.15),
+        rgba(120,60,160,0.05),
+        rgba(120,60,160,0)
+    );
+}
+
+/* Tank Destroyer - muted red (label only) */
+.role-label.Tank-Destroyer {
+    background: linear-gradient(
+        to right,
+        rgba(160,40,40,0.30),
+        rgba(160,40,40,0.15),
+        rgba(160,40,40,0.05),
+        rgba(160,40,40,0)
+    );
+}
+
+/* SPAA - soft yellow (label only) */
+.role-label.SPAA {
+    background: linear-gradient(
+        to right,
+        rgba(200,170,40,0.30),
+        rgba(200,170,40,0.15),
+        rgba(200,170,40,0.05),
+        rgba(200,170,40,0)
+    );
+}
+
+/* ===== TANK BOX ===== */
+
+.tank-box {
+    height: 95px;
+    width: calc(100% - 8px);
+    background-size: cover;
+    background-position: center;
+    margin: 4px 0;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    position: relative;
+    z-index: 2;
+    background-color: rgba(0,0,0,0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tank-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+
+.tank-linked-highlight {
+    border-color: #c8ffd8 !important;
+    box-shadow: 0 0 8px rgba(170, 255, 190, 0.9);
+}
+
+/* Tank Name */
+.tank-name {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.65);
+    padding: 2px 5px;
+    font-size: 11px;
+}
+
+/* Remove Button */
+.remove-btn {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    background: rgba(0,0,0,0.65);
+    padding: 2px 6px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+    transition: background 0.2s ease;
+}
+
+.remove-btn:hover {
+    background: rgba(255,0,0,0.7);
+}
+
+/* Edit Button */
+.edit-vehicle-btn {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0,0,0,0.65);
+    padding: 2px 5px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    transition: background 0.2s ease;
+}
+
+.edit-vehicle-btn:hover {
+    background: rgba(0,150,255,0.7);
+}
+
+/* Add Button */
+.add-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 20px;
+    cursor: pointer;
+    margin-top: 0;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.edit-mode .tier-cell:hover .add-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== MODAL ===== */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: #1f1f1f;
+    padding: 25px;
+    width: 300px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-content input,
+.modal-content select,
+.modal-content textarea {
+    padding: 6px;
+}
+
+#descToolbar button {
+    padding: 2px 6px;
+    margin-right: 2px;
+}
+
+/* adjust label appearance in class modal */
+#classModal .modal-content label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.links-dropdown {
+    position: relative;
+}
+
+.links-dropdown-toggle {
+    width: 100%;
+    text-align: left;
+    background: #232323;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.links-dropdown-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    background: #1f1f1f;
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 6px;
+    z-index: 30;
+}
+
+.links-search {
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+}
+
+.vehicle-links-list {
+    max-height: 140px;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 6px;
+    font-size: 12px;
+}
+
+.vehicle-link-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.vehicle-link-item:last-child {
+    margin-bottom: 0;
+}
+
+/* thumbnail previews for multiple-image selection */
+.image-thumb {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease;
+}
+
+
+/* preview circle for class color picker */
+.color-preview {
+    width: 30px;
+    height: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+.image-thumb.selected {
+    border-color: #4CAF50;
+}
+
+/* compact hover card */
+.hover-popup {
+    position: absolute;
+    background: rgba(30,30,30,0.95);
+    color: white;
+    padding: 8px 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    z-index: 1000;
+    width: 180px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    font-size: 12px;
+}
+
+.role-label {
+    position: relative;
+}
+.role-label .role-btn {
+    position: absolute;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 0;
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 3px;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+.role-label .hide-role-btn {
+    top: calc(50% - 12px);
+}
+.role-label .edit-role-btn {
+    top: calc(50% + 12px);
+}
+.edit-mode .role-label .role-btn {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+    transition-delay: 0s;
+}
+.edit-mode .role-label:hover .role-btn {
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 0.2s;
+}
+.role-label .role-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* draggable label hint */
+.role-label[draggable] {
+    cursor: move;
+}
+.role-label[draggable]:hover::after {
+    content: 'Hold to move';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 4px;
+    font-size: 10px;
+    color: #ccc;
+    white-space: nowrap;
+    padding: 0 4px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 2px;
+}
+
+.hover-popup .popup-title {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+.hover-popup img {
+    width: 100%;
+    height: auto;
+    margin-top: 6px;
+    display: block;
+}
+
+/* add spacing between direct children inside popup */
+.hover-popup > * {
+    margin-bottom: 6px;
+}
+.hover-popup > *:last-child {
+    margin-bottom: 0;
+}
+
+.vehicle-detail-window {
+    position: fixed;
+    z-index: 2500;
+    width: 320px;
+    min-width: 280px;
+    min-height: 220px;
+    height: auto;
+    max-width: calc(100vw - 12px);
+    background: rgba(22,22,22,0.98);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 6px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.55);
+    overflow: hidden;
+}
+
+.vehicle-detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    cursor: move;
+}
+
+.vehicle-detail-title {
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.vehicle-detail-close {
+    background: transparent;
+    color: #ddd;
+    border: 0;
+    font-size: 14px;
+    padding: 0 2px;
+}
+
+.vehicle-detail-close:hover {
+    color: #fff;
+}
+
+.vehicle-detail-body {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+    height: calc(100% - 42px);
+    overflow: auto;
+}
+
+.vehicle-detail-name {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.vehicle-detail-preview-wrap {
+    position: relative;
+}
+
+.vehicle-detail-main-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.16);
+}
+
+.vehicle-detail-hover-image {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 96%;
+    max-height: 220px;
+    object-fit: contain;
+    border: 1px solid rgba(200,255,216,0.95);
+    box-shadow: 0 0 12px rgba(170, 255, 190, 0.65);
+    background: rgba(0,0,0,0.88);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.vehicle-detail-album {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.vehicle-detail-thumb {
+    width: 48px;
+    height: 38px;
+    object-fit: cover;
+    border: 1px solid rgba(255,255,255,0.14);
+    transition: transform 0.12s ease;
+}
+
+.vehicle-detail-thumb:hover {
+    transform: scale(1.16);
+}
+
+.vehicle-detail-desc {
+    color: #e8e8e8;
+    line-height: 1.25;
+}
+
+.vehicle-detail-stats {
+    color: #f0f0f0;
+    line-height: 1.25;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.vehicle-detail-stat-row {
+    display: grid;
+    grid-template-columns: 58px auto;
+    column-gap: 12px;
+    align-items: center;
+}
+
+.vehicle-detail-stat-label {
+    text-align: right;
+    font-weight: 700;
+}
+
+.vehicle-detail-stat-value {
+    text-align: left;
+}
+
+.vehicle-detail-resize {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    right: 1px;
+    bottom: 1px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 55%, rgba(255,255,255,0.5) 56%);
+}
+
+.connector-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.connector-line {
+    transition: stroke 0.15s ease, stroke-width 0.15s ease, filter 0.15s ease;
+}
+
+.connector-line-highlight {
+    stroke: #c8ffd8 !important;
+    stroke-width: 2 !important;
+    filter: drop-shadow(0 0 3px rgba(170, 255, 190, 0.9));
+}
+
+/* ===== INDEX PAGE ===== */
+
+.index-page {
+    min-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+
+.index-footer {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+    pointer-events: none;
+    z-index: 50;
+}
+
+.index-footer-version {
+    white-space: nowrap;
+}
+
+.index-footer-center {
+    text-align: center;
+    white-space: nowrap;
+    opacity: 0.9;
+}
+
+.index-footer-disclaimer {
+    text-align: right;
+    opacity: 0.85;
+}
+
+.index-card {
+    width: min(720px, 100%);
+    background: #1f1f1f;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.index-header-banner {
+    width: min(1100px, 95vw);
+    max-height: 320px;
+    display: block;
+    object-fit: contain;
+    margin: 0;
+    transform: translateY(-12px);
+    transform-origin: center center;
+    animation: index-banner-sway 4.5s ease-in-out infinite;
+}
+
+@keyframes index-banner-sway {
+    0% {
+        transform: translateY(-12px) rotate(-1deg);
+    }
+    50% {
+        transform: translateY(-12px) rotate(1deg);
+    }
+    100% {
+        transform: translateY(-12px) rotate(-1deg);
+    }
+}
+
+.index-title {
+    margin: 0 0 16px;
+    text-align: center;
+}
+
+.index-create-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.index-input {
+    flex: 1;
+    background: #232323;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 8px 10px;
+}
+
+.index-primary-btn {
+    background: #262626;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.index-primary-btn:hover {
+    background: #323232;
+}
+
+.index-faction-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.index-faction-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.02);
+}
+
+.index-faction-name {
+    cursor: pointer;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.index-faction-name:hover {
+    color: #c8ffd8;
+}
+
+.index-faction-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.index-action-btn {
+    background: #262626;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.index-action-btn:hover {
+    background: #323232;
+}
+
+.index-faction-actions .index-action-btn {
+    width: 32px;
+    height: 28px;
+    padding: 0;
+    font-size: 13px;
+}
+
+.index-icon-modal-content {
+    width: min(360px, calc(100vw - 20px));
+    max-height: calc(100vh - 40px);
+    overflow: auto;
+    padding: 14px;
+}
+
+.index-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    gap: 3px;
+    margin-top: 6px;
+}
+
+.index-icon-option {
+    background: #262626;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.index-icon-option:hover {
+    background: #323232;
+}
+
+.index-icon-option.selected {
+    border-color: #c8ffd8;
+    box-shadow: 0 0 0 1px rgba(170, 255, 190, 0.5) inset;
+}
+
+.index-flag-icon,
+.index-option-flag-icon,
+.index-button-flag-icon {
+    width: 20px;
+    height: 14px;
+    object-fit: fill;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 2px;
+    background: rgba(0,0,0,0.15);
+}
+
+.index-button-flag-icon {
+    width: 18px;
+    height: 12px;
+}
+
+#openIconPickerBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#openColorPickerBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.index-button-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: #ffffff;
+}
+
+.index-edit-modal-content {
+    width: min(420px, calc(100vw - 24px));
+}
+
+#factionEditModal {
+    z-index: 3100;
+}
+
+#iconPickerModal {
+    z-index: 3200;
+}
+
+#editFactionColor {
+    width: 100%;
+    height: 32px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: #232323;
+    padding: 0;
+}
+
+#editColorPreview {
+    margin-top: 8px;
+    margin-left: 0;
+    width: 100%;
+    height: 16px;
+    border-radius: 3px;
+}
+
+.hold-delete-btn {
+    margin-top: 10px;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,120,120,0.45);
+    background: rgba(120,20,20,0.35);
+    color: #fff;
+}
+
+.hold-delete-label {
+    position: relative;
+    z-index: 2;
+}
+
+.hold-delete-progress {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    background: rgba(255,70,70,0.65);
+    transition: width 0.04s linear;
+    z-index: 1;
+}
+
+.index-option-flag-icon {
+    width: 30px;
+    height: 20px;
+}
