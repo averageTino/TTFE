@@ -1002,3 +1002,61 @@ button {
     width: 30px;
     height: 20px;
 }
+
+.storage-disclaimer-btn {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    width: 34px;
+    height: 34px;
+    border: 3px solid #fff;
+    background: #1f1f1f;
+    color: #fff;
+    font-weight: 800;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0;
+    z-index: 3500;
+}
+
+.storage-disclaimer-btn:hover {
+    background: #2b2b2b;
+}
+
+.storage-disclaimer-label {
+    position: fixed;
+    top: 20px;
+    left: 54px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    text-shadow: 0 0 3px rgba(255,255,255,0.65), 0 0 7px rgba(255,255,255,0.35);
+    z-index: 3500;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .storage-disclaimer-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+        border-width: 2px;
+        top: 10px;
+        left: 10px;
+    }
+
+    .storage-disclaimer-label {
+        top: 14px;
+        left: 44px;
+        font-size: 12px;
+    }
+}
+
+.index-disclaimer-modal-content {
+    width: min(460px, calc(100vw - 24px));
+}
+
+.index-disclaimer-modal-content p {
+    margin: 0;
+    line-height: 1.45;
+}
