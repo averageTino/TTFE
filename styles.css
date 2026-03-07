@@ -35,6 +35,34 @@ button {
     gap: 15px;
 }
 
+.view-mode-switch {
+    display: inline-flex;
+    align-items: center;
+    background: #202020;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.view-mode-btn {
+    background: transparent;
+    color: #bdbdbd;
+    border: 0;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.view-mode-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+}
+
+.view-mode-btn.active {
+    background: rgba(90, 130, 185, 0.45);
+    color: #fff;
+}
+
 .top-spacer {
     flex: 1;
 }
@@ -281,10 +309,32 @@ button {
 .tank-name {
     position: absolute;
     top: 4px;
+    left: 4px;
     right: 4px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.tank-name-text {
+    margin-left: auto;
     background: rgba(0,0,0,0.65);
     padding: 2px 5px;
-    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tank-foreign-flag {
+    width: 20px;
+    height: 15px;
+    object-fit: fill;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 2px;
+    background: rgba(0,0,0,0.15);
+    flex: 0 0 auto;
 }
 
 /* Remove Button */
@@ -319,6 +369,88 @@ button {
 
 .edit-vehicle-btn:hover {
     background: rgba(0,150,255,0.7);
+}
+
+.folder-toggle-btn {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.65);
+    color: #fff;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+}
+
+.folder-toggle-btn:hover {
+    background: rgba(255,170,90,0.65);
+}
+
+.tank-box.folder-child {
+    border-style: dashed;
+    border-width: 1px;
+    width: calc(100% - 30px);
+    height: 74px;
+    margin-left: 22px;
+}
+
+.folder-children-group {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 2px;
+}
+
+.folder-children-group::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 8px;
+    width: 2px;
+    background: rgba(255,255,255,0.55);
+    box-shadow: 0 0 6px rgba(210,235,255,0.45);
+    pointer-events: none;
+}
+
+.folder-children-group .tank-box.folder-child::before {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    width: 14px;
+    height: 2px;
+    background: rgba(255,255,255,0.55);
+    box-shadow: 0 0 5px rgba(210,235,255,0.45);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.tank-box.folder-enter {
+    animation: folderChildFadeIn 180ms ease-out;
+}
+
+@keyframes folderChildFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /* Add Button */
@@ -542,6 +674,27 @@ button {
     border-radius: 2px;
 }
 
+.edit-mode .tank-box[draggable] {
+    cursor: move;
+}
+
+.edit-mode .tank-box[draggable]:hover::after {
+    content: 'Hold to move';
+    position: absolute;
+    right: calc(100% + 4px);
+    top: 50%;
+    transform: translateY(-50%);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 10px;
+    color: #ccc;
+    white-space: nowrap;
+    padding: 4px 2px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
 .hover-popup .popup-title {
     font-weight: bold;
     margin-bottom: 4px;
@@ -588,6 +741,21 @@ button {
 .vehicle-detail-title {
     font-weight: 700;
     font-size: 12px;
+}
+
+.vehicle-detail-header-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vehicle-detail-flag {
+    width: 20px;
+    height: 15px;
+    object-fit: fill;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 2px;
+    background: rgba(0,0,0,0.15);
 }
 
 .vehicle-detail-close {
@@ -720,6 +888,35 @@ button {
     filter: drop-shadow(0 0 3px rgba(170, 255, 190, 0.9));
 }
 
+/* ===== BAREBONES MODE ===== */
+
+.barebones-mode .tech-tree-grid {
+    column-gap: 30px;
+}
+
+.barebones-mode .tier-cell {
+    border: 0;
+}
+
+.barebones-mode .tier-header {
+    background: transparent;
+    border: 0;
+}
+
+.barebones-mode .role-label {
+    border: 0;
+    background: transparent !important;
+}
+
+.barebones-mode.edit-mode .tier-cell {
+    background: transparent !important;
+}
+
+.barebones-mode.edit-mode .role-label {
+    background: transparent !important;
+    text-shadow: none;
+}
+
 /* ===== INDEX PAGE ===== */
 
 .index-page {
@@ -768,6 +965,30 @@ button {
     border-radius: 8px;
     padding: 24px;
     box-sizing: border-box;
+}
+
+.index-transfer-row {
+    width: min(720px, 100%);
+    margin-top: -2px;
+    margin-right: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.index-mini-btn {
+    padding: 3px 9px;
+    font-size: 11px;
+    line-height: 1.2;
+    background: rgba(255,255,255,0.04);
+    color: #d8d8d8;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 4px;
+}
+
+.index-mini-btn:hover {
+    background: rgba(255,255,255,0.11);
+    color: #fff;
 }
 
 .index-header-banner {
@@ -946,6 +1167,64 @@ button {
 
 .index-edit-modal-content {
     width: min(420px, calc(100vw - 24px));
+}
+
+.index-export-modal-content {
+    width: min(420px, calc(100vw - 24px));
+    padding: 16px;
+}
+
+.index-export-subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: rgba(255,255,255,0.78);
+}
+
+.index-export-tree-list {
+    max-height: 260px;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,0.16);
+    border-radius: 6px;
+    padding: 8px;
+    background: rgba(0,0,0,0.2);
+}
+
+.index-export-tree-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 13px;
+}
+
+.index-export-tree-name {
+    font-weight: 700;
+    flex: 1;
+}
+
+.index-export-tree-item:last-child {
+    border-bottom: 0;
+}
+
+.index-export-tree-item input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+}
+
+.index-export-tree-flag {
+    width: 18px;
+    height: 12px;
+    object-fit: fill;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 2px;
+    background: rgba(0,0,0,0.15);
+}
+
+.index-export-empty {
+    font-size: 12px;
+    color: rgba(255,255,255,0.72);
+    padding: 6px 4px;
 }
 
 #factionEditModal {
