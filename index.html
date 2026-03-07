@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Faction Creator</title>
+    <title>This is TTFE</title>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M32 24 V50'/%3E%3Cpath d='M32 50 L26 58'/%3E%3Cpath d='M32 50 L38 58'/%3E%3Cpath d='M32 24 C25 20 20 24 20 30 C15 30 12 34 12 39 C12 45 17 49 23 49 H41 C49 49 54 44 54 37 C54 31 50 26 44 26 C42 20 36 18 32 24 Z'/%3E%3C/g%3E%3C/svg%3E">
     <link rel="stylesheet" href="styles.css">
     <script src="storage.js"></script>
 </head>
@@ -25,10 +26,16 @@
 
         <ul id="factionList" class="index-faction-list"></ul>
     </div>
+
+    <div class="index-transfer-row">
+        <button id="indexImportBtn" type="button" class="index-mini-btn">Import</button>
+        <button id="indexExportBtn" type="button" class="index-mini-btn">Export</button>
+        <input type="file" id="indexImportJsonInput" accept="application/json,.json" style="display:none;">
+    </div>
 </div>
 
 <div class="index-footer">
-    <span class="index-footer-version">Version 0.1</span>
+    <span class="index-footer-version">Version 0.2</span>
     <span class="index-footer-center">@averagetino at discord for suggestions / bug reports</span>
     <span class="index-footer-disclaimer">Disclaimer: All of this was codevibed to the top; kerfuffle is expected.</span>
 </div>
@@ -81,6 +88,29 @@
         </p>
         <div class="modal-buttons">
             <button id="closeStorageDisclaimer" type="button">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="indexExportModal" class="modal hidden">
+    <div class="modal-content index-export-modal-content">
+        <h2>Export Tech Trees</h2>
+        <p class="index-export-subtitle">Select which tech trees to export.</p>
+
+        <div id="indexExportTreeList" class="index-export-tree-list">
+            <label class="index-export-tree-item">
+                <input type="checkbox" checked>
+                <span>Example Faction</span>
+            </label>
+            <label class="index-export-tree-item">
+                <input type="checkbox">
+                <span>Another Faction</span>
+            </label>
+        </div>
+
+        <div class="modal-buttons">
+            <button id="confirmExportSelectedBtn" type="button" class="index-primary-btn">Export Selected</button>
+            <button id="cancelExportModalBtn" type="button" class="index-primary-btn">Cancel</button>
         </div>
     </div>
 </div>
@@ -147,6 +177,67 @@ function saveFactions() {
     TechTreeStorage.setFactions(factions).catch(err => {
         console.error("Failed to save factions:", err);
     });
+}
+
+function downloadJsonFile(data, fileName) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+function safeFileName(name) {
+    return (name || 'factions').replace(/[^a-z0-9_-]+/gi, '-').replace(/-+/g, '-').toLowerCase();
+}
+
+function generateUniqueFactionId(existingSet) {
+    let id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    while (existingSet.has(id)) {
+        id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+    existingSet.add(id);
+    return id;
+}
+
+function extractImportFactions(parsed) {
+    if (!parsed) return [];
+
+    if (Array.isArray(parsed)) {
+        return parsed.filter(item => item && typeof item === 'object' && item.techTree && item.name);
+    }
+
+    if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.factions)) {
+            return parsed.factions.filter(item => item && typeof item === 'object' && item.techTree && item.name);
+        }
+        if (parsed.techTree && parsed.name) {
+            return [parsed];
+        }
+    }
+
+    return [];
+}
+
+function normalizeImportedFaction(rawFaction, existingIds) {
+    const next = {
+        id: generateUniqueFactionId(existingIds),
+        name: String(rawFaction.name || 'Imported Faction').trim() || 'Imported Faction',
+        flag: normalizeFlagValue(rawFaction.flag || ""),
+        color: rawFaction.color || '#ffffff',
+        techTree: rawFaction.techTree && typeof rawFaction.techTree === 'object' ? rawFaction.techTree : {},
+        roles: Array.isArray(rawFaction.roles) ? rawFaction.roles : undefined
+    };
+
+    if (!Array.isArray(next.roles)) {
+        delete next.roles;
+    }
+
+    return next;
 }
 
 function warnIfIndexedDbUnavailable() {
@@ -391,6 +482,118 @@ function deleteEditingFaction() {
     closeFactionEditModal();
 }
 
+function renderExportTreeList() {
+    const list = document.getElementById("indexExportTreeList");
+    if (!list) return;
+    list.innerHTML = "";
+
+    if (!Array.isArray(factions) || factions.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "index-export-empty";
+        empty.textContent = "No tech trees available.";
+        list.appendChild(empty);
+        return;
+    }
+
+    factions.forEach((faction, idx) => {
+        const row = document.createElement("label");
+        row.className = "index-export-tree-item";
+
+        const normalizedFlag = normalizeFlagValue(faction.flag);
+        if (normalizedFlag) {
+            const flagImg = document.createElement("img");
+            flagImg.className = "index-export-tree-flag";
+            flagImg.src = getFlagSrc(normalizedFlag);
+            flagImg.alt = normalizedFlag;
+            row.appendChild(flagImg);
+        }
+
+        const name = document.createElement("span");
+        name.className = "index-export-tree-name";
+        name.textContent = faction.name || `Faction ${idx + 1}`;
+
+        row.appendChild(name);
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = true;
+        cb.dataset.factionId = faction.id || String(idx);
+        row.appendChild(cb);
+
+        list.appendChild(row);
+    });
+}
+
+function openExportModal() {
+    renderExportTreeList();
+    const modal = document.getElementById("indexExportModal");
+    if (modal) modal.classList.remove("hidden");
+}
+
+function closeExportModal() {
+    const modal = document.getElementById("indexExportModal");
+    if (modal) modal.classList.add("hidden");
+}
+
+function exportSelectedFactions() {
+    const list = document.getElementById("indexExportTreeList");
+    if (!list) return;
+
+    const checked = Array.from(list.querySelectorAll('input[type="checkbox"]:checked'));
+    if (!checked.length) {
+        alert("Select at least one tech tree to export.");
+        return;
+    }
+
+    const selectedIdSet = new Set(checked.map(cb => cb.dataset.factionId));
+    const selectedFactions = factions.filter((faction, idx) => selectedIdSet.has(faction.id || String(idx)));
+    if (!selectedFactions.length) {
+        alert("No matching tech trees found to export.");
+        return;
+    }
+
+    const payload = {
+        format: "ttfe-factions-export-v1",
+        exportedAt: new Date().toISOString(),
+        factions: selectedFactions
+    };
+
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const baseName = selectedFactions.length === 1
+        ? safeFileName(selectedFactions[0].name)
+        : 'selected-factions';
+
+    downloadJsonFile(payload, `${baseName}-tech-trees-${dateStamp}.json`);
+    closeExportModal();
+}
+
+function importFactionsFromFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+        try {
+            const parsed = JSON.parse(String(reader.result || "{}"));
+            const incoming = extractImportFactions(parsed);
+            if (!incoming.length) {
+                alert("Invalid import file. No factions found.");
+                return;
+            }
+
+            const existingIds = new Set((factions || []).map(f => f.id));
+            const normalized = incoming.map(f => normalizeImportedFaction(f, existingIds));
+
+            factions.push(...normalized);
+            await TechTreeStorage.setFactions(factions);
+            renderFactions();
+
+            alert(`Import complete. Added ${normalized.length} tech tree${normalized.length === 1 ? '' : 's'}.`);
+        } catch (err) {
+            alert("Failed to import JSON: " + (err.message || err));
+        }
+    };
+    reader.readAsText(file);
+}
+
 function resetHoldDeleteVisual() {
     const progress = document.getElementById("holdDeleteProgress");
     if (progress) progress.style.width = "0%";
@@ -427,6 +630,19 @@ function startHoldDelete() {
 }
 
 document.getElementById("openIconPickerBtn").onclick = () => openIconPicker("create");
+document.getElementById("indexImportBtn").onclick = () => {
+    const input = document.getElementById("indexImportJsonInput");
+    if (!input) return;
+    input.value = "";
+    input.click();
+};
+document.getElementById("indexExportBtn").onclick = openExportModal;
+document.getElementById("cancelExportModalBtn").onclick = closeExportModal;
+document.getElementById("confirmExportSelectedBtn").onclick = exportSelectedFactions;
+document.getElementById("indexImportJsonInput").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    importFactionsFromFile(file);
+});
 document.getElementById("openColorPickerBtn").onclick = () => {
     const picker = document.getElementById("createFactionColorPicker");
     const btn = document.getElementById("openColorPickerBtn");
@@ -506,6 +722,15 @@ if (storageDisclaimerBtn && storageDisclaimerModal && closeStorageDisclaimerBtn)
     storageDisclaimerModal.addEventListener("click", (e) => {
         if (e.target === storageDisclaimerModal) {
             storageDisclaimerModal.classList.add("hidden");
+        }
+    });
+}
+
+const indexExportModal = document.getElementById("indexExportModal");
+if (indexExportModal) {
+    indexExportModal.addEventListener("click", (e) => {
+        if (e.target === indexExportModal) {
+            closeExportModal();
         }
     });
 }
