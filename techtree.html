@@ -6,9 +6,144 @@
     <link rel="stylesheet" href="styles.css">
     <script src="storage.js"></script>
     <style>
-    /* Specs labels and inputs in vehicle modal */
-    #vehicleModal .spec-label{font-weight:700;display:block;margin-top:8px}
-    #vehicleModal .spec-input{display:block;width:100%;box-sizing:border-box;padding:6px 8px;margin-top:4px;text-align:center}
+    /* Compact horizontal rows for key fields in vehicle modal */
+    #vehicleModal .field-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+    #vehicleModal .modal-content{position:relative;overflow:visible}
+    #vehicleModal .vehicle-modal-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    #vehicleModal .vehicle-advanced-toggle{
+        padding:4px 8px;
+        border:1px solid rgba(255,170,90,0.5);
+        background:rgba(140,72,12,0.3);
+        color:#fff;
+        font-weight:700;
+        white-space:nowrap;
+    }
+    #vehicleModal .field-row-label{font-weight:700;min-width:64px;margin:0}
+    #vehicleModal .field-row-input{flex:1;box-sizing:border-box;padding:5px 8px}
+    #vehicleModal .section-block{margin-top:6px}
+    #vehicleModal .section-block.links-disabled{
+        opacity:0.45;
+        position:relative;
+    }
+    #vehicleModal .section-block.links-disabled .links-dropdown{
+        pointer-events:none;
+    }
+    #vehicleModal .section-block.links-disabled:hover::after{
+        content:"Foldered vehicles cant be linked.";
+        position:absolute;
+        left:0;
+        top:100%;
+        margin-top:4px;
+        font-size:11px;
+        color:#d0d0d0;
+        background:rgba(0,0,0,0.45);
+        border:1px solid rgba(255,255,255,0.12);
+        border-radius:3px;
+        padding:3px 6px;
+        white-space:nowrap;
+        z-index:50;
+        pointer-events:none;
+    }
+    #vehicleModal .section-label{display:block;font-weight:700;margin-bottom:4px}
+    #vehicleModal #descToolbar{display:flex;gap:4px;margin-bottom:4px}
+    #vehicleModal #vehicleDesc{width:100%;box-sizing:border-box;padding:6px 8px}
+    #vehicleModal #imagePreviewContainer{display:flex;gap:5px;margin-top:4px;flex-wrap:wrap}
+    #vehicleModal .modal-buttons button{
+        flex:1;
+        position:relative;
+        overflow:hidden;
+        border:1px solid rgba(255,170,90,0.55);
+        background:rgba(140,72,12,0.38);
+        color:#fff;
+        font-weight:700;
+    }
+    #vehicleModal .modal-buttons button:hover{background:rgba(175,92,18,0.5)}
+    #vehicleModal .modal-buttons button:active{background:rgba(205,110,22,0.58)}
+    #vehicleModal .vehicle-advanced-panel{
+        position:absolute;
+        left:calc(100% + 12px);
+        top:0;
+        width:260px;
+        min-height:180px;
+        padding:12px;
+        box-sizing:border-box;
+        border-radius:6px;
+        border:1px solid rgba(255,170,90,0.45);
+        background:#1f1f1f;
+        color:#fff;
+        box-shadow:0 6px 18px rgba(0,0,0,0.35);
+        z-index:1;
+    }
+    #vehicleModal .vehicle-advanced-panel h3{margin:0 0 6px 0;font-size:14px}
+    #vehicleModal .vehicle-advanced-panel p{margin:0;font-size:12px;line-height:1.35;opacity:0.9}
+    #vehicleModal .advanced-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+    #vehicleModal .advanced-label{font-weight:700;font-size:12px;opacity:0.95}
+    #vehicleModal .advanced-inline{display:flex;align-items:center;gap:8px}
+    #vehicleModal #vehicleFlagSelect{
+        padding:4px 8px;
+        border:1px solid rgba(255,170,90,0.5);
+        background:rgba(140,72,12,0.3);
+        color:#fff;
+        font-weight:700;
+    }
+    #vehicleModal #vehicleFlagSelect:disabled{opacity:0.45;cursor:not-allowed}
+    #vehicleModal #vehicleFlagPreview{width:20px;height:14px}
+    #vehicleModal #folderVehicleDropdown{position:relative;flex:1}
+    #vehicleModal #folderVehicleDropdownToggle{
+        width:100%;
+        text-align:left;
+        border:1px solid rgba(255,170,90,0.45);
+        background:rgba(140,72,12,0.22);
+        color:#fff;
+        padding:4px 8px;
+    }
+    #vehicleModal #folderVehicleDropdownPanel{
+        left:0;
+        right:0;
+        top:calc(100% + 4px);
+        z-index:40;
+        max-height:220px;
+        overflow:hidden;
+    }
+    #vehicleModal #folderVehicleSearch{margin-bottom:4px}
+    #vehicleModal #folderVehicleList{max-height:140px;overflow-y:auto}
+    #vehicleModal .folder-vehicle-option{
+        width:100%;
+        text-align:left;
+        background:transparent;
+        color:#fff;
+        border:1px solid rgba(255,255,255,0.08);
+        margin-bottom:4px;
+        font-size:12px;
+        padding:5px 6px;
+    }
+    #vehicleModal .folder-vehicle-option:hover{background:rgba(255,255,255,0.08)}
+    #vehicleModal .folder-vehicle-option.selected{border-color:rgba(255,170,90,0.65);background:rgba(140,72,12,0.35)}
+    #vehicleIconPickerModal{z-index:3300}
+    #classModal .modal-buttons button{
+        flex:1;
+        position:relative;
+        overflow:hidden;
+        border:1px solid rgba(255,170,90,0.55);
+        background:rgba(140,72,12,0.38);
+        color:#fff;
+        font-weight:700;
+    }
+    #classModal .modal-buttons button:hover{background:rgba(175,92,18,0.5)}
+    #classModal .modal-buttons button:active{background:rgba(205,110,22,0.58)}
+    #classModal .modal-content{gap:6px}
+    #classModal .class-field-row{display:flex;align-items:center;gap:10px;margin-top:4px}
+    #classModal .class-field-label{font-weight:700;min-width:64px;margin:0}
+    #classModal .class-field-input{flex:1;box-sizing:border-box;padding:5px 8px}
+    #classModal #classColor{height:30px;padding:2px 4px}
+    #classModal #colorPreview{
+        display:block;
+        width:100%;
+        height:14px;
+        margin:4px 0 0 0;
+        border-radius:4px;
+        box-sizing:border-box;
+    }
     </style>
 </head>
 <body>
@@ -16,6 +151,10 @@
 <div class="top-bar">
     <span class="back-btn" onclick="goBack()">&lt;</span>
     <h1 id="factionTitle"></h1>
+    <div id="viewModeSwitch" class="view-mode-switch" title="Tech tree display mode">
+        <button type="button" id="modeTraditionalBtn" class="view-mode-btn active">Traditional</button>
+        <button type="button" id="modeBarebonesBtn" class="view-mode-btn">Barebones</button>
+    </div>
     <span class="top-spacer"></span>
     <span id="importBtn" class="edit-btn">Import</span>
     <span id="exportBtn" class="edit-btn">Export</span>
@@ -31,66 +170,111 @@
 <!-- VEHICLE CREATION MODAL -->
 <div id="vehicleModal" class="modal hidden">
     <div class="modal-content">
-        <h2 id="modalTitle">Create Vehicle</h2>
-
-        <label>Name</label>
-        <input type="text" id="vehicleName">
-
-        <label>Class</label>
-        <select id="vehicleClass">
-            <option>Heavy Tank</option>
-            <option>Medium Tank</option>
-            <option>Light Tank</option>
-            <option>Tank Destroyer</option>
-            <option>SPAA</option>
-            <option>MBT</option>
-        </select>
-
-        <label>Tier</label>
-        <select id="vehicleTier">
-            <option value="1">I</option>
-            <option value="2">II</option>
-            <option value="3">III</option>
-            <option value="4">IV</option>
-            <option value="5">V</option>
-            <option value="6">VI</option>
-            <option value="7">VII</option>
-            <option value="8">VIII</option>
-            <option value="9">IX</option>
-            <option value="10">X</option>
-            <option value="11">XI</option>
-            <option value="12">XII</option>
-        </select>
-
-        <label>Description</label>
-        <div id="descToolbar" style="margin-bottom:4px;">
-            <button type="button" data-cmd="bold"><b>B</b></button>
-            <button type="button" data-cmd="italic"><i>I</i></button>
-            <button type="button" data-cmd="underline"><u>U</u></button>
+        <div class="vehicle-modal-header">
+            <h2 id="modalTitle">Create Vehicle</h2>
+            <button type="button" id="vehicleAdvancedToggle" class="vehicle-advanced-toggle">Advanced &gt;</button>
         </div>
-        <textarea id="vehicleDesc" rows="3" style="width:100%;"></textarea>
 
-        <label>Images (up to 5)</label>
-        <input type="file" id="vehicleImages" accept="image/*" multiple>
-        <div id="imagePreviewContainer" style="display:flex;gap:5px;margin-top:5px;"></div>
-
-        <label>Links (optional)</label>
-        <div class="links-dropdown" id="linksDropdown">
-            <button type="button" id="linksDropdownToggle" class="links-dropdown-toggle">Select links (0)</button>
-            <div id="linksDropdownPanel" class="links-dropdown-panel hidden">
-                <input type="text" id="vehicleLinksSearch" class="links-search" placeholder="Search vehicles...">
-                <div id="vehicleLinksList" class="vehicle-links-list"></div>
+        <div id="vehicleAdvancedPanel" class="vehicle-advanced-panel hidden">
+            <h3>Advanced</h3>
+            <div class="advanced-row">
+                <div class="advanced-inline">
+                    <label class="advanced-label" for="vehicleForeignToggle">Foreign vehicle</label>
+                    <input type="checkbox" id="vehicleForeignToggle">
+                </div>
+                <div class="advanced-inline">
+                    <button type="button" id="vehicleFlagSelect" disabled>Flag</button>
+                    <img id="vehicleFlagPreview" class="index-button-flag-icon hidden" alt="flag preview">
+                </div>
+            </div>
+            <div class="advanced-row">
+                <label class="advanced-label" for="folderVehicleDropdownToggle">Folder Vehicle</label>
+                <div class="links-dropdown" id="folderVehicleDropdown">
+                    <button type="button" id="folderVehicleDropdownToggle" class="links-dropdown-toggle">Select vehicle</button>
+                    <div id="folderVehicleDropdownPanel" class="links-dropdown-panel hidden">
+                        <input type="text" id="folderVehicleSearch" class="links-search" placeholder="Search vehicles...">
+                        <div id="folderVehicleList" class="vehicle-links-list"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <label class="spec-label" for="vehicleHull">Hull</label>
-        <input class="spec-input" type="text" id="vehicleHull">
+        <div class="field-row">
+            <label class="field-row-label" for="vehicleName">Name</label>
+            <input class="field-row-input" type="text" id="vehicleName">
+        </div>
 
-        <label class="spec-label" for="vehicleTurret">Turret</label>
-        <input class="spec-input" type="text" id="vehicleTurret">
+        <div class="field-row">
+            <label class="field-row-label" for="vehicleClass">Class</label>
+            <select class="field-row-input" id="vehicleClass">
+                <option>Heavy Tank</option>
+                <option>Medium Tank</option>
+                <option>Light Tank</option>
+                <option>Tank Destroyer</option>
+                <option>SPAA</option>
+                <option>MBT</option>
+            </select>
+        </div>
 
-        <label class="spec-label" for="vehicleGun">Gun</label>
-        <input class="spec-input" type="text" id="vehicleGun">
+        <div class="field-row">
+            <label class="field-row-label" for="vehicleTier">Tier</label>
+            <select class="field-row-input" id="vehicleTier">
+                <option value="1">I</option>
+                <option value="2">II</option>
+                <option value="3">III</option>
+                <option value="4">IV</option>
+                <option value="5">V</option>
+                <option value="6">VI</option>
+                <option value="7">VII</option>
+                <option value="8">VIII</option>
+                <option value="9">IX</option>
+                <option value="10">X</option>
+                <option value="11">XI</option>
+                <option value="12">XII</option>
+            </select>
+        </div>
+
+        <div class="section-block">
+            <label class="section-label" for="vehicleDesc">Description</label>
+            <div id="descToolbar">
+                <button type="button" data-cmd="bold"><b>B</b></button>
+                <button type="button" data-cmd="italic"><i>I</i></button>
+                <button type="button" data-cmd="underline"><u>U</u></button>
+            </div>
+            <textarea id="vehicleDesc" rows="3"></textarea>
+        </div>
+
+        <div class="section-block">
+            <label class="section-label" for="vehicleImages">Images (up to 5)</label>
+            <input type="file" id="vehicleImages" accept="image/*" multiple>
+            <div id="imagePreviewContainer"></div>
+        </div>
+
+        <div class="section-block" id="vehicleLinksSection">
+            <label class="section-label" for="linksDropdownToggle">Links (optional)</label>
+            <div class="links-dropdown" id="linksDropdown">
+                <button type="button" id="linksDropdownToggle" class="links-dropdown-toggle">Select links (0)</button>
+                <div id="linksDropdownPanel" class="links-dropdown-panel hidden">
+                    <input type="text" id="vehicleLinksSearch" class="links-search" placeholder="Search vehicles...">
+                    <div id="vehicleLinksList" class="vehicle-links-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="field-row">
+            <label class="field-row-label" for="vehicleHull">Hull</label>
+            <input class="field-row-input" type="text" id="vehicleHull">
+        </div>
+
+        <div class="field-row">
+            <label class="field-row-label" for="vehicleTurret">Turret</label>
+            <input class="field-row-input" type="text" id="vehicleTurret">
+        </div>
+
+        <div class="field-row">
+            <label class="field-row-label" for="vehicleGun">Gun</label>
+            <input class="field-row-input" type="text" id="vehicleGun">
+        </div>
 
         <div class="modal-buttons">
             <button id="createVehicle">SAVE</button>
@@ -107,10 +291,14 @@
 <div id="classModal" class="modal hidden">
     <div class="modal-content">
         <h2 id="classModalTitle">New Class</h2>
-        <label>Name</label>
-        <input type="text" id="className">
-        <label>Color</label>
-        <input type="color" id="classColor" value="#ffffff">
+        <div class="class-field-row">
+            <label class="class-field-label" for="className">Name</label>
+            <input class="class-field-input" type="text" id="className">
+        </div>
+        <div class="class-field-row">
+            <label class="class-field-label" for="classColor">Color</label>
+            <input class="class-field-input" type="color" id="classColor" value="#ffffff">
+        </div>
         <div id="colorPreview" class="color-preview"></div>
         <div class="modal-buttons">
             <button id="saveClass">Save</button>
@@ -120,6 +308,18 @@
             <span class="hold-delete-label">Hold 4s to Delete</span>
             <span class="hold-delete-progress" id="holdDeleteClassProgress"></span>
         </button>
+    </div>
+</div>
+
+<div id="vehicleIconPickerModal" class="modal hidden">
+    <div class="modal-content index-icon-modal-content">
+        <h2>Select Vehicle Flag</h2>
+        <div id="vehicleIconPickerGrid" class="index-icon-grid"></div>
+        <div class="modal-buttons">
+            <button id="vehicleCustomIconUploadBtn" type="button" title="Best resolution: 256 x 128px">Custom Icon</button>
+            <button id="closeVehicleIconPicker" type="button">Close</button>
+        </div>
+        <input type="file" id="vehicleCustomIconFileInput" accept="image/*" style="display:none;">
     </div>
 </div>
 
@@ -181,6 +381,20 @@ let editingTier = null;
 let editingIndex = null;
 let editingVehicle = null;
 let modalLinkedIds = [];
+let modalForeignVehicle = false;
+let modalForeignFlag = "";
+let modalFolderVehicleId = "";
+let viewMode = "traditional";
+let draggedVehicleMeta = null;
+const expandedFolderParents = new Set();
+let folderExpandAnimParentId = null;
+
+const CUSTOM_FLAG_PREFIX = "custom:";
+const flagSvgFiles = [
+    "ad.svg","ae.svg","af.svg","ag.svg","ai.svg","al.svg","am.svg","ao.svg","aq.svg","ar.svg","arab.svg","as.svg","asean.svg","at.svg","au.svg","aw.svg","ax.svg","az.svg","ba.svg","bb.svg","bd.svg","be.svg","bf.svg","bg.svg","bh.svg","bi.svg","bj.svg","bl.svg","bm.svg","bn.svg","bo.svg","bq.svg","br.svg","bs.svg","bt.svg","bv.svg","bw.svg","by.svg","bz.svg","ca.svg","cc.svg","cd.svg","cefta.svg","cf.svg","cg.svg","ch.svg","ci.svg","ck.svg","cl.svg","cm.svg","cn.svg","co.svg","cp.svg","cr.svg","cu.svg","cv.svg","cw.svg","cx.svg","cy.svg","cz.svg","de.svg","dg.svg","dj.svg","dk.svg","dm.svg","do.svg","dz.svg","eac.svg","ec.svg","ee.svg","eg.svg","eh.svg","er.svg","es-ct.svg","es-ga.svg","es-pv.svg","es.svg","et.svg","eu.svg","fi.svg","fj.svg","fk.svg","fm.svg","fo.svg","fr.svg","ga.svg","gb-eng.svg","gb-nir.svg","gb-sct.svg","gb-wls.svg","gb.svg","gd.svg","ge.svg","gf.svg","gg.svg","gh.svg","gi.svg","gl.svg","gm.svg","gn.svg","gp.svg","gq.svg","gr.svg","gs.svg","gt.svg","gu.svg","gw.svg","gy.svg","hk.svg","hm.svg","hn.svg","hr.svg","ht.svg","hu.svg","ic.svg","id.svg","ie.svg","il.svg","im.svg","in.svg","io.svg","iq.svg","ir.svg","is.svg","it.svg","je.svg","jm.svg","jo.svg","jp.svg","ke.svg","kg.svg","kh.svg","ki.svg","km.svg","kn.svg","kp.svg","kr.svg","kw.svg","ky.svg","kz.svg","la.svg","lb.svg","lc.svg","li.svg","lk.svg","lr.svg","ls.svg","lt.svg","lu.svg","lv.svg","ly.svg","ma.svg","mc.svg","md.svg","me.svg","mf.svg","mg.svg","mh.svg","mk.svg","ml.svg","mm.svg","mn.svg","mo.svg","mp.svg","mq.svg","mr.svg","ms.svg","mt.svg","mu.svg","mv.svg","mw.svg","mx.svg","my.svg","mz.svg","na.svg","nc.svg","ne.svg","nf.svg","ng.svg","ni.svg","nl.svg","no.svg","np.svg","nr.svg","nu.svg","nz.svg","om.svg","pa.svg","pc.svg","pe.svg","pf.svg","pg.svg","ph.svg","pk.svg","pl.svg","pm.svg","pn.svg","pr.svg","ps.svg","pt.svg","pw.svg","py.svg","qa.svg","re.svg","ro.svg","rs.svg","ru.svg","rw.svg","sa.svg","sb.svg","sc.svg","sd.svg","se.svg","sg.svg","sh-ac.svg","sh-hl.svg","sh-ta.svg","sh.svg","si.svg","sj.svg","sk.svg","sl.svg","sm.svg","sn.svg","so.svg","sr.svg","ss.svg","st.svg","sv.svg","sx.svg","sy.svg","sz.svg","tc.svg","td.svg","tf.svg","tg.svg","th.svg","tj.svg","tk.svg","tl.svg","tm.svg","tn.svg","to.svg","tr.svg","tt.svg","tv.svg","tw.svg","tz.svg","ua.svg","ug.svg","um.svg","un.svg","us.svg","uy.svg","uz.svg","va.svg","vc.svg","ve.svg","vg.svg","vi.svg","vn.svg","vu.svg","wf.svg","ws.svg","xk.svg","xx.svg","ye.svg","yt.svg","za.svg","zm.svg","zw.svg"
+];
+flagSvgFiles.push("256px-Flag_of_the_Soviet_Union.svg.png");
+const flagSvgSet = new Set(flagSvgFiles);
 
 const vehicleRoles = [
     "Heavy Tank",
@@ -190,6 +404,116 @@ const vehicleRoles = [
     "MBT",
     "SPAA"
 ];
+
+function normalizeVehicleFlagValue(flagValue) {
+    if (!flagValue) return "";
+    const raw = String(flagValue);
+    if (raw.startsWith(CUSTOM_FLAG_PREFIX)) return raw;
+    if (raw.startsWith("data:image/")) return `${CUSTOM_FLAG_PREFIX}${raw}`;
+    if (flagSvgSet.has(raw)) return raw;
+    const asCode = `${raw.toLowerCase()}.svg`;
+    if (flagSvgSet.has(asCode)) return asCode;
+    return "";
+}
+
+function applyViewMode() {
+    const normalized = viewMode === "barebones" ? "barebones" : "traditional";
+    viewMode = normalized;
+
+    document.body.classList.toggle("barebones-mode", viewMode === "barebones");
+
+    const traditionalBtn = document.getElementById("modeTraditionalBtn");
+    const barebonesBtn = document.getElementById("modeBarebonesBtn");
+    if (traditionalBtn) traditionalBtn.classList.toggle("active", viewMode === "traditional");
+    if (barebonesBtn) barebonesBtn.classList.toggle("active", viewMode === "barebones");
+}
+
+function setViewMode(nextMode) {
+    viewMode = nextMode === "barebones" ? "barebones" : "traditional";
+    try {
+        localStorage.setItem("tt-view-mode", viewMode);
+    } catch {
+    }
+    applyViewMode();
+    if (faction) renderTechTree();
+}
+
+function loadViewMode() {
+    let stored = "traditional";
+    try {
+        stored = localStorage.getItem("tt-view-mode") || "traditional";
+    } catch {
+    }
+    viewMode = stored === "barebones" ? "barebones" : "traditional";
+    applyViewMode();
+}
+function getVehicleFlagSrc(flagValue) {
+    const normalized = normalizeVehicleFlagValue(flagValue);
+    if (!normalized) return "";
+    if (normalized.startsWith(CUSTOM_FLAG_PREFIX)) {
+        return normalized.slice(CUSTOM_FLAG_PREFIX.length);
+    }
+    return `content/${normalized}`;
+}
+
+function updateVehicleFlagControls() {
+    const foreignToggle = document.getElementById("vehicleForeignToggle");
+    const flagBtn = document.getElementById("vehicleFlagSelect");
+    const preview = document.getElementById("vehicleFlagPreview");
+    if (!foreignToggle || !flagBtn || !preview) return;
+
+    modalForeignVehicle = !!foreignToggle.checked;
+    flagBtn.disabled = !modalForeignVehicle;
+
+    if (!modalForeignVehicle) {
+        preview.classList.add("hidden");
+        return;
+    }
+
+    if (modalForeignFlag) {
+        preview.src = getVehicleFlagSrc(modalForeignFlag);
+        preview.classList.remove("hidden");
+    } else {
+        preview.classList.add("hidden");
+    }
+}
+
+function renderVehicleIconPicker() {
+    const grid = document.getElementById("vehicleIconPickerGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    flagSvgFiles.forEach(fileName => {
+        const option = document.createElement("button");
+        option.type = "button";
+        option.className = "index-icon-option" + (modalForeignFlag === fileName ? " selected" : "");
+
+        const img = document.createElement("img");
+        img.className = "index-option-flag-icon";
+        img.src = getVehicleFlagSrc(fileName);
+        img.alt = fileName;
+        option.appendChild(img);
+
+        option.onclick = () => {
+            modalForeignFlag = normalizeVehicleFlagValue(fileName);
+            updateVehicleFlagControls();
+            renderVehicleIconPicker();
+            closeVehicleIconPicker();
+        };
+        grid.appendChild(option);
+    });
+}
+
+function openVehicleIconPicker() {
+    renderVehicleIconPicker();
+    const modal = document.getElementById("vehicleIconPickerModal");
+    if (modal) modal.classList.remove("hidden");
+}
+
+function closeVehicleIconPicker() {
+    const modal = document.getElementById("vehicleIconPickerModal");
+    if (modal) modal.classList.add("hidden");
+}
 
 // helper to convert number to roman numeral (1-12)
 function toRoman(num) {
@@ -327,7 +651,13 @@ function getAllVehicles() {
     for (let tier = 1; tier <= 12; tier++) {
         const arr = faction.techTree[tier] || [];
         arr.forEach(v => {
-            all.push({ id: v.id, name: v.name, tier: tier, class: v.class });
+            all.push({
+                id: v.id,
+                name: v.name,
+                tier: tier,
+                class: v.class,
+                folderVehicleId: v.folderVehicleId || ""
+            });
         });
     }
     return all;
@@ -343,12 +673,16 @@ function renderVehicleLinksList(excludeId = null) {
 
     const vehicles = getAllVehicles()
         .filter(v => v.id && v.id !== excludeId)
+        .filter(v => !v.folderVehicleId)
         .filter(v => {
             if (!query) return true;
             const label = `${toRoman(v.tier)} ${v.class} ${v.name}`.toLowerCase();
             return label.includes(query);
         })
         .sort((a, b) => (a.tier - b.tier) || a.name.localeCompare(b.name));
+
+    const visibleIds = new Set(vehicles.map(v => v.id));
+    modalLinkedIds = modalLinkedIds.filter(id => visibleIds.has(id));
 
     if (!vehicles.length) {
         const empty = document.createElement("div");
@@ -395,6 +729,134 @@ function updateLinksDropdownLabel() {
     btn.textContent = count > 0 ? `Select links (${count})` : "Select links (0)";
 }
 
+function updateLinksAvailabilityControls() {
+    const linksSection = document.getElementById("vehicleLinksSection");
+    const linksPanel = document.getElementById("linksDropdownPanel");
+    if (!linksSection) return;
+
+    const isFolderedChild = !!modalFolderVehicleId;
+    linksSection.classList.toggle("links-disabled", isFolderedChild);
+
+    if (isFolderedChild) {
+        modalLinkedIds = [];
+        updateLinksDropdownLabel();
+        if (linksPanel) linksPanel.classList.add("hidden");
+    }
+}
+
+function removeIncomingLinksToVehicle(targetVehicleId) {
+    if (!targetVehicleId || !faction || !faction.techTree) return;
+    for (let tier = 1; tier <= 12; tier++) {
+        const arr = faction.techTree[tier] || [];
+        arr.forEach(v => {
+            if (!v || !Array.isArray(v.links) || !v.links.length) return;
+            v.links = v.links.filter(linkId => linkId !== targetVehicleId);
+        });
+    }
+}
+
+function getVehicleById(id) {
+    if (!id || !faction || !faction.techTree) return null;
+    for (let tier = 1; tier <= 12; tier++) {
+        const arr = faction.techTree[tier] || [];
+        for (let i = 0; i < arr.length; i++) {
+            const v = arr[i];
+            if (v && v.id === id) {
+                return { vehicle: v, tier };
+            }
+        }
+    }
+    return null;
+}
+
+function getFolderVehicleCandidates(excludeId = null) {
+    if (!faction || !faction.techTree) return [];
+    const tierVal = parseInt(document.getElementById("vehicleTier")?.value || "", 10);
+    const classVal = document.getElementById("vehicleClass")?.value || "";
+    if (!Number.isInteger(tierVal) || !classVal) return [];
+
+    return (faction.techTree[tierVal] || [])
+        .filter(v => v && v.id && v.id !== excludeId)
+        .filter(v => v.class === classVal)
+        .filter(v => !v.folderVehicleId)
+        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+}
+
+function updateFolderVehicleDropdownLabel() {
+    const btn = document.getElementById("folderVehicleDropdownToggle");
+    if (!btn) return;
+    if (!modalFolderVehicleId) {
+        btn.textContent = "Select vehicle";
+        return;
+    }
+    const found = getVehicleById(modalFolderVehicleId);
+    btn.textContent = found && found.vehicle
+        ? `Folder: ${found.vehicle.name || "(unnamed)"}`
+        : "Select vehicle";
+}
+
+function renderFolderVehicleList(excludeId = null) {
+    const list = document.getElementById("folderVehicleList");
+    if (!list) return;
+    list.innerHTML = "";
+
+    const searchElem = document.getElementById("folderVehicleSearch");
+    const query = (searchElem ? searchElem.value : "").trim().toLowerCase();
+    const candidates = getFolderVehicleCandidates(excludeId)
+        .filter(v => {
+            if (!query) return true;
+            return (v.name || "").toLowerCase().includes(query);
+        });
+
+    const candidateIdSet = new Set(candidates.map(v => v.id));
+    if (modalFolderVehicleId && !candidateIdSet.has(modalFolderVehicleId)) {
+        modalFolderVehicleId = "";
+        updateLinksAvailabilityControls();
+    }
+
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "folder-vehicle-option" + (!modalFolderVehicleId ? " selected" : "");
+    clearBtn.textContent = "None";
+    clearBtn.addEventListener("click", () => {
+        modalFolderVehicleId = "";
+        updateFolderVehicleDropdownLabel();
+        updateLinksAvailabilityControls();
+        renderFolderVehicleList(excludeId);
+        const panel = document.getElementById("folderVehicleDropdownPanel");
+        if (panel) panel.classList.add("hidden");
+    });
+    list.appendChild(clearBtn);
+
+    if (!candidates.length) {
+        const empty = document.createElement("div");
+        empty.textContent = "No matching vehicles.";
+        empty.style.opacity = "0.75";
+        empty.style.fontSize = "12px";
+        list.appendChild(empty);
+        updateFolderVehicleDropdownLabel();
+        return;
+    }
+
+    candidates.forEach(v => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "folder-vehicle-option" + (modalFolderVehicleId === v.id ? " selected" : "");
+        btn.textContent = `${v.name || "(unnamed)"}`;
+        btn.addEventListener("click", () => {
+            modalFolderVehicleId = v.id;
+            updateFolderVehicleDropdownLabel();
+            updateLinksAvailabilityControls();
+            renderFolderVehicleList(excludeId);
+            const panel = document.getElementById("folderVehicleDropdownPanel");
+            if (panel) panel.classList.add("hidden");
+        });
+        list.appendChild(btn);
+    });
+
+    updateFolderVehicleDropdownLabel();
+}
+
 function drawVehicleLinks(container, visibleVehicleElements, visibleVehiclesById) {
     const old = container.querySelector('.connector-overlay');
     if (old) old.remove();
@@ -428,18 +890,35 @@ function drawVehicleLinks(container, visibleVehicleElements, visibleVehiclesById
             const x2 = targetRect.left + targetRect.width / 2 - containerRect.left;
             const y2 = targetRect.top + targetRect.height / 2 - containerRect.top;
 
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.classList.add('connector-line');
-            line.dataset.sourceId = sourceId;
-            line.dataset.targetId = targetId;
-            line.setAttribute('x1', String(x1));
-            line.setAttribute('y1', String(y1));
-            line.setAttribute('x2', String(x2));
-            line.setAttribute('y2', String(y2));
-            line.setAttribute('stroke', '#ffffff');
-            line.setAttribute('stroke-width', '1');
-            line.setAttribute('opacity', '0.9');
-            svg.appendChild(line);
+            if (viewMode === "barebones") {
+                // Barebones mode uses orthogonal connectors only.
+                const elbowX = (x1 + x2) / 2;
+                const pathData = `M ${x1} ${y1} L ${elbowX} ${y1} L ${elbowX} ${y2} L ${x2} ${y2}`;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.classList.add('connector-line');
+                path.dataset.sourceId = sourceId;
+                path.dataset.targetId = targetId;
+                path.setAttribute('d', pathData);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', '#ffffff');
+                path.setAttribute('stroke-width', '1');
+                path.setAttribute('opacity', '0.9');
+                svg.appendChild(path);
+            } else {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.classList.add('connector-line');
+                line.dataset.sourceId = sourceId;
+                line.dataset.targetId = targetId;
+                line.setAttribute('x1', String(x1));
+                line.setAttribute('y1', String(y1));
+                line.setAttribute('x2', String(x2));
+                line.setAttribute('y2', String(y2));
+                line.setAttribute('stroke', '#ffffff');
+                line.setAttribute('stroke-width', '1');
+                line.setAttribute('opacity', '0.9');
+                svg.appendChild(line);
+            }
         });
     });
 
@@ -522,6 +1001,33 @@ function closeVehicleDetailWindow(win) {
 function closeAllVehicleDetailWindows() {
     vehicleDetailWindows.forEach(win => win.remove());
     vehicleDetailWindows.clear();
+}
+
+function reorderVehiclesInClass(tier, className, fromIndex, toIndex) {
+    const arr = faction && faction.techTree ? faction.techTree[tier] : null;
+    if (!Array.isArray(arr)) return false;
+
+    const classIndices = [];
+    const classVehicles = [];
+    arr.forEach((v, idx) => {
+        if (v && v.class === className) {
+            classIndices.push(idx);
+            classVehicles.push(v);
+        }
+    });
+
+    const fromPos = classIndices.indexOf(fromIndex);
+    const toPos = classIndices.indexOf(toIndex);
+    if (fromPos === -1 || toPos === -1 || fromPos === toPos) return false;
+
+    const moved = classVehicles.splice(fromPos, 1)[0];
+    classVehicles.splice(toPos, 0, moved);
+
+    classIndices.forEach((arrIndex, pos) => {
+        arr[arrIndex] = classVehicles[pos];
+    });
+
+    return true;
 }
 
 function clamp(val, min, max) {
@@ -608,14 +1114,29 @@ function openVehicleDetailWindow(vehicle, tier, role, sourceElem) {
     title.className = 'vehicle-detail-title';
     title.textContent = `${toRoman(tier)} - ${role}`;
 
+    const headerRight = document.createElement('div');
+    headerRight.className = 'vehicle-detail-header-right';
+
+    const detailFlagSrc = (vehicle.foreignVehicle && vehicle.foreignFlag)
+        ? getVehicleFlagSrc(vehicle.foreignFlag)
+        : "";
+    if (detailFlagSrc) {
+        const detailFlag = document.createElement('img');
+        detailFlag.className = 'vehicle-detail-flag';
+        detailFlag.src = detailFlagSrc;
+        detailFlag.alt = 'foreign flag';
+        headerRight.appendChild(detailFlag);
+    }
+
     const closeBtn = document.createElement('button');
     closeBtn.type = 'button';
     closeBtn.className = 'vehicle-detail-close';
     closeBtn.textContent = '✕';
     closeBtn.onclick = () => closeVehicleDetailWindow(panel);
+    headerRight.appendChild(closeBtn);
 
     header.appendChild(title);
-    header.appendChild(closeBtn);
+    header.appendChild(headerRight);
 
     const body = document.createElement('div');
     body.className = 'vehicle-detail-body';
@@ -747,6 +1268,17 @@ function wrapSelection(textarea, before, after) {
 
 // attach toolbar commands once DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
+    loadViewMode();
+
+    const traditionalBtn = document.getElementById("modeTraditionalBtn");
+    const barebonesBtn = document.getElementById("modeBarebonesBtn");
+    if (traditionalBtn) {
+        traditionalBtn.addEventListener("click", () => setViewMode("traditional"));
+    }
+    if (barebonesBtn) {
+        barebonesBtn.addEventListener("click", () => setViewMode("barebones"));
+    }
+
     const toolbar = document.getElementById("descToolbar");
     if (toolbar) {
         toolbar.addEventListener("click", (e) => {
@@ -794,6 +1326,35 @@ window.addEventListener('DOMContentLoaded', () => {
             linksPanel.classList.add("hidden");
         }
     });
+
+    const folderDropdown = document.getElementById("folderVehicleDropdown");
+    const folderToggle = document.getElementById("folderVehicleDropdownToggle");
+    const folderPanel = document.getElementById("folderVehicleDropdownPanel");
+    const folderSearch = document.getElementById("folderVehicleSearch");
+
+    if (folderToggle && folderPanel) {
+        folderToggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            renderFolderVehicleList(editingVehicle ? editingVehicle.id : null);
+            folderPanel.classList.toggle("hidden");
+            if (!folderPanel.classList.contains("hidden") && folderSearch) {
+                folderSearch.focus();
+            }
+        });
+    }
+
+    if (folderSearch) {
+        folderSearch.addEventListener("input", () => {
+            renderFolderVehicleList(editingVehicle ? editingVehicle.id : null);
+        });
+    }
+
+    document.addEventListener("click", (e) => {
+        if (!folderDropdown || !folderPanel) return;
+        if (!folderDropdown.contains(e.target)) {
+            folderPanel.classList.add("hidden");
+        }
+    });
 });
 
 let faction = factions.find(f => f.id === currentId);
@@ -839,6 +1400,10 @@ initializeTechTreePage().catch(err => {
 
 function renderTechTree() {
     const container = document.getElementById("techTree");
+    const previousPositions = new Map();
+    container.querySelectorAll('.tank-box[data-vehicle-id]').forEach(card => {
+        previousPositions.set(card.dataset.vehicleId, card.getBoundingClientRect());
+    });
     container.innerHTML = "";
     const visibleVehicleElements = new Map();
     const visibleVehiclesById = new Map();
@@ -939,19 +1504,42 @@ function renderTechTree() {
                 .map((v, i) => ({ ...v, index: i }))
                 .filter(v => v.class === role);
 
-            vehiclesInCell.forEach(vehicle => {
+            const vehiclesById = new Map();
+            vehiclesInCell.forEach(v => {
+                if (v && v.id) vehiclesById.set(v.id, v);
+            });
 
-                if (vehicle.hidden && !editMode) return;
+            const childrenByParent = new Map();
+            vehiclesInCell.forEach(v => {
+                if (!v.folderVehicleId) return;
+                if (!childrenByParent.has(v.folderVehicleId)) {
+                    childrenByParent.set(v.folderVehicleId, []);
+                }
+                childrenByParent.get(v.folderVehicleId).push(v);
+            });
+
+            const parentVehicles = vehiclesInCell.filter(v => !v.folderVehicleId || !vehiclesById.has(v.folderVehicleId));
+
+            const renderVehicleCard = (vehicle, isFolderChild = false) => {
+                if (vehicle.hidden && !editMode) return null;
 
                 const tank = document.createElement("div");
                 tank.className = "tank-box";
+                if (isFolderChild) {
+                    tank.classList.add("folder-child");
+                    if (folderExpandAnimParentId && vehicle.folderVehicleId === folderExpandAnimParentId) {
+                        tank.classList.add("folder-enter");
+                    }
+                }
                 tank.style.borderColor = getRoleBorderColor(roleObj, role);
+
                 const vehicleId = vehicle.id;
                 if (vehicleId) {
                     tank.dataset.vehicleId = vehicleId;
                     visibleVehicleElements.set(vehicleId, tank);
                     visibleVehiclesById.set(vehicleId, vehicle);
                 }
+
                 let imgUrl = "";
                 if (vehicle.images && vehicle.images.length) {
                     imgUrl = vehicle.images[vehicle.preview || 0] || "";
@@ -966,10 +1554,22 @@ function renderTechTree() {
 
                 const nameTag = document.createElement("div");
                 nameTag.className = "tank-name";
-                nameTag.textContent = vehicle.name;
+                const flagSrc = (vehicle.foreignVehicle && vehicle.foreignFlag)
+                    ? getVehicleFlagSrc(vehicle.foreignFlag)
+                    : "";
+                if (flagSrc) {
+                    const flagImg = document.createElement("img");
+                    flagImg.className = "tank-foreign-flag";
+                    flagImg.src = flagSrc;
+                    flagImg.alt = "foreign flag";
+                    nameTag.appendChild(flagImg);
+                }
+                const nameText = document.createElement("span");
+                nameText.className = "tank-name-text";
+                nameText.textContent = vehicle.name;
+                nameTag.appendChild(nameText);
                 tank.appendChild(nameTag);
 
-                // tooltip popup on hover (only when not in edit mode, but can show anyway)
                 tank.addEventListener('mouseenter', () => {
                     if (vehicle.id) {
                         setHoveredVehicleLinks(vehicle.id);
@@ -988,45 +1588,104 @@ function renderTechTree() {
                 });
 
                 if (editMode) {
+                    tank.draggable = true;
+                    tank.addEventListener('dragstart', (e) => {
+                        draggedVehicleMeta = { tier, className: role, index: vehicle.index };
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
 
-                    // REMOVE / HIDE BUTTON
-                    const removeBtn = document.createElement("div");
-                    removeBtn.className = "remove-btn";
-                    removeBtn.textContent = "-";
+                    tank.addEventListener('dragover', (e) => {
+                        if (!draggedVehicleMeta) return;
+                        if (draggedVehicleMeta.tier !== tier || draggedVehicleMeta.className !== role) return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                    });
 
-                    removeBtn.addEventListener("click", (e) => {
-                        e.stopPropagation();
-                        faction.techTree[tier][vehicle.index].hidden = 
-                            !faction.techTree[tier][vehicle.index].hidden;
+                    tank.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (!draggedVehicleMeta) return;
+                        if (draggedVehicleMeta.tier !== tier || draggedVehicleMeta.className !== role) return;
+                        const changed = reorderVehiclesInClass(tier, role, draggedVehicleMeta.index, vehicle.index);
+                        draggedVehicleMeta = null;
+                        if (!changed) return;
                         saveFactions();
                         renderTechTree();
                     });
 
+                    tank.addEventListener('dragend', () => {
+                        draggedVehicleMeta = null;
+                    });
+
+                    const removeBtn = document.createElement("div");
+                    removeBtn.className = "remove-btn";
+                    removeBtn.textContent = "-";
+                    removeBtn.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        faction.techTree[tier][vehicle.index].hidden = !faction.techTree[tier][vehicle.index].hidden;
+                        saveFactions();
+                        renderTechTree();
+                    });
                     tank.appendChild(removeBtn);
 
-                    // EDIT BUTTON
                     const editBtn = document.createElement("div");
                     editBtn.className = "edit-vehicle-btn";
                     editBtn.textContent = "✏";
-
                     editBtn.onclick = (e) => {
                         e.stopPropagation();
-
                         editingVehicle = vehicle;
                         editingTier = tier;
                         editingIndex = vehicle.index;
-
                         document.getElementById("vehicleName").value = vehicle.name;
                         document.getElementById("vehicleClass").value = vehicle.class;
                         document.getElementById("modalTitle").textContent = "Edit Vehicle";
-
                         openModal(tier);
                     };
-
                     tank.appendChild(editBtn);
                 }
 
-                cell.appendChild(tank);
+                const childCount = (childrenByParent.get(vehicle.id) || []).filter(v => !v.hidden || editMode).length;
+                if (childCount > 0) {
+                    const folderToggle = document.createElement("div");
+                    const expanded = expandedFolderParents.has(vehicle.id);
+                    folderToggle.className = "folder-toggle-btn";
+                    folderToggle.textContent = expanded ? "-" : "+";
+                    folderToggle.title = expanded ? "Collapse foldered vehicles" : "Expand foldered vehicles";
+                    folderToggle.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        if (expandedFolderParents.has(vehicle.id)) {
+                            expandedFolderParents.delete(vehicle.id);
+                            folderExpandAnimParentId = null;
+                        } else {
+                            expandedFolderParents.add(vehicle.id);
+                            folderExpandAnimParentId = vehicle.id;
+                        }
+                        renderTechTree();
+                    });
+                    tank.appendChild(folderToggle);
+                }
+
+                return tank;
+            };
+
+            parentVehicles.forEach(parentVehicle => {
+                const parentCard = renderVehicleCard(parentVehicle, false);
+                if (!parentCard) return;
+
+                cell.appendChild(parentCard);
+
+                const childVehicles = childrenByParent.get(parentVehicle.id) || [];
+                if (!expandedFolderParents.has(parentVehicle.id)) return;
+                const childrenGroup = document.createElement("div");
+                childrenGroup.className = "folder-children-group";
+                childVehicles.forEach(childVehicle => {
+                    const childCard = renderVehicleCard(childVehicle, true);
+                    if (childCard) {
+                        childrenGroup.appendChild(childCard);
+                    }
+                });
+                if (childrenGroup.children.length) {
+                    cell.appendChild(childrenGroup);
+                }
             });
 
             // Add button
@@ -1043,6 +1702,27 @@ function renderTechTree() {
     });
 
     drawVehicleLinks(container, visibleVehicleElements, visibleVehiclesById);
+
+    visibleVehicleElements.forEach((elem, id) => {
+        const prev = previousPositions.get(id);
+        if (!prev) return;
+        const next = elem.getBoundingClientRect();
+        const dx = prev.left - next.left;
+        const dy = prev.top - next.top;
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+        elem.animate(
+            [
+                { transform: `translate(${dx}px, ${dy}px)` },
+                { transform: 'translate(0px, 0px)' }
+            ],
+            {
+                duration: 260,
+                easing: 'ease-out'
+            }
+        );
+    });
+
+    folderExpandAnimParentId = null;
 }
 
 function saveFactions() {
@@ -1144,6 +1824,9 @@ function openModal(tier) {
         document.getElementById("vehicleTurret").value = editingVehicle.turret || "";
         document.getElementById("vehicleGun").value = editingVehicle.gun || "";
         modalLinkedIds = Array.isArray(editingVehicle.links) ? editingVehicle.links.slice() : [];
+        modalForeignVehicle = !!editingVehicle.foreignVehicle;
+        modalForeignFlag = normalizeVehicleFlagValue(editingVehicle.foreignFlag || "");
+        modalFolderVehicleId = editingVehicle.folderVehicleId || "";
         // load images from existing vehicle
         if (editingVehicle.images && editingVehicle.images.length) {
             modalImages = editingVehicle.images.slice();
@@ -1164,11 +1847,19 @@ function openModal(tier) {
         document.getElementById("vehicleTurret").value = "";
         document.getElementById("vehicleGun").value = "";
         modalLinkedIds = [];
+        modalForeignVehicle = false;
+        modalForeignFlag = "";
+        modalFolderVehicleId = "";
         modalPreviewIndex = null;
         const removeVehicleBtn = document.getElementById("removeVehicle");
         if (removeVehicleBtn) removeVehicleBtn.style.display = "none";
     }
     renderVehicleLinksList(editingVehicle ? editingVehicle.id : null);
+    renderFolderVehicleList(editingVehicle ? editingVehicle.id : null);
+    updateLinksAvailabilityControls();
+    const foreignToggle = document.getElementById("vehicleForeignToggle");
+    if (foreignToggle) foreignToggle.checked = modalForeignVehicle;
+    updateVehicleFlagControls();
     updateLinksDropdownLabel();
     updateImagePreviews();
     toggleSaveState();
@@ -1188,6 +1879,9 @@ function updateClassSelect(selected) {
 
 function resetModal() {
     document.getElementById("vehicleModal").classList.add("hidden");
+    const advPanel = document.getElementById("vehicleAdvancedPanel");
+    if (advPanel) advPanel.classList.add("hidden");
+    closeVehicleIconPicker();
     updateClassSelect();
     document.getElementById("vehicleName").value = "";
     document.getElementById("vehicleDesc").value = "";
@@ -1203,22 +1897,116 @@ function resetModal() {
     if (removeProgress) removeProgress.style.width = "0%";
     const linksPanel = document.getElementById("linksDropdownPanel");
     const linksSearch = document.getElementById("vehicleLinksSearch");
+    const folderPanel = document.getElementById("folderVehicleDropdownPanel");
+    const folderSearch = document.getElementById("folderVehicleSearch");
     if (linksPanel) linksPanel.classList.add("hidden");
     if (linksSearch) linksSearch.value = "";
+    if (folderPanel) folderPanel.classList.add("hidden");
+    if (folderSearch) folderSearch.value = "";
     editingVehicle = null;
     editingTier = null;
     editingIndex = null;
     modalImages = [];
     modalLinkedIds = [];
+    modalForeignVehicle = false;
+    modalForeignFlag = "";
+    modalFolderVehicleId = "";
     modalPreviewIndex = null;
     expectedImageCount = 0;
     pendingImageReads = 0;
     updateImagePreviews();
+    const foreignToggle = document.getElementById("vehicleForeignToggle");
+    if (foreignToggle) foreignToggle.checked = false;
+    updateVehicleFlagControls();
+    updateFolderVehicleDropdownLabel();
     updateLinksDropdownLabel();
+    updateLinksAvailabilityControls();
     toggleSaveState();
 }
 
+const vehicleClassSelect = document.getElementById("vehicleClass");
+if (vehicleClassSelect) {
+    vehicleClassSelect.addEventListener("change", () => {
+        renderFolderVehicleList(editingVehicle ? editingVehicle.id : null);
+    });
+}
+
+const vehicleTierSelect = document.getElementById("vehicleTier");
+if (vehicleTierSelect) {
+    vehicleTierSelect.addEventListener("change", () => {
+        renderFolderVehicleList(editingVehicle ? editingVehicle.id : null);
+    });
+}
+
 document.getElementById("cancelVehicle").onclick = resetModal;
+
+const vehicleAdvancedToggle = document.getElementById("vehicleAdvancedToggle");
+if (vehicleAdvancedToggle) {
+    vehicleAdvancedToggle.addEventListener("click", () => {
+        const panel = document.getElementById("vehicleAdvancedPanel");
+        if (!panel) return;
+        panel.classList.toggle("hidden");
+    });
+}
+
+const vehicleForeignToggle = document.getElementById("vehicleForeignToggle");
+if (vehicleForeignToggle) {
+    vehicleForeignToggle.addEventListener("change", () => {
+        if (!vehicleForeignToggle.checked) {
+            modalForeignFlag = "";
+        }
+        updateVehicleFlagControls();
+    });
+}
+
+const vehicleFlagSelectBtn = document.getElementById("vehicleFlagSelect");
+if (vehicleFlagSelectBtn) {
+    vehicleFlagSelectBtn.addEventListener("click", () => {
+        if (!vehicleForeignToggle || !vehicleForeignToggle.checked) return;
+        openVehicleIconPicker();
+    });
+}
+
+const closeVehicleIconPickerBtn = document.getElementById("closeVehicleIconPicker");
+if (closeVehicleIconPickerBtn) {
+    closeVehicleIconPickerBtn.addEventListener("click", closeVehicleIconPicker);
+}
+
+const vehicleCustomIconUploadBtn = document.getElementById("vehicleCustomIconUploadBtn");
+if (vehicleCustomIconUploadBtn) {
+    vehicleCustomIconUploadBtn.addEventListener("click", () => {
+        const input = document.getElementById("vehicleCustomIconFileInput");
+        if (!input) return;
+        input.value = "";
+        input.click();
+    });
+}
+
+const vehicleCustomIconFileInput = document.getElementById("vehicleCustomIconFileInput");
+if (vehicleCustomIconFileInput) {
+    vehicleCustomIconFileInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type || !file.type.startsWith("image/")) {
+            alert("Please select an image file.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = String(reader.result || "");
+            if (!dataUrl.startsWith("data:image/")) {
+                alert("Failed to read image.");
+                return;
+            }
+            modalForeignFlag = `${CUSTOM_FLAG_PREFIX}${dataUrl}`;
+            updateVehicleFlagControls();
+            renderVehicleIconPicker();
+            closeVehicleIconPicker();
+        };
+        reader.readAsDataURL(file);
+    });
+}
 
 const removeVehicleBtn = document.getElementById("removeVehicle");
 if (removeVehicleBtn) {
@@ -1464,6 +2252,13 @@ function performSave(data, targetTier) {
         vehicleRef.class = data.class;
         vehicleRef.description = data.description;
         vehicleRef.links = Array.isArray(data.links) ? data.links : [];
+        vehicleRef.foreignVehicle = !!data.foreignVehicle;
+        vehicleRef.foreignFlag = data.foreignFlag || "";
+        vehicleRef.folderVehicleId = data.folderVehicleId || "";
+        if (vehicleRef.folderVehicleId) {
+            vehicleRef.links = [];
+            removeIncomingLinksToVehicle(vehicleRef.id);
+        }
         if ('hull' in data) vehicleRef.hull = data.hull;
         if ('turret' in data) vehicleRef.turret = data.turret;
         if ('gun' in data) vehicleRef.gun = data.gun;
@@ -1479,6 +2274,9 @@ function performSave(data, targetTier) {
         }
     } else {
         faction.techTree[safeTier].push(data);
+        if (data.folderVehicleId) {
+            removeIncomingLinksToVehicle(data.id);
+        }
     }
     saveFactions();
     renderTechTree();
@@ -1505,6 +2303,14 @@ document.getElementById("createVehicle").onclick = async () => {
             newData.id = generateVehicleId();
         }
         newData.links = modalLinkedIds.slice();
+        newData.foreignVehicle = !!(document.getElementById("vehicleForeignToggle") && document.getElementById("vehicleForeignToggle").checked);
+        newData.foreignFlag = newData.foreignVehicle ? normalizeVehicleFlagValue(modalForeignFlag) : "";
+        const folderCandidates = getFolderVehicleCandidates(editingVehicle ? editingVehicle.id : null);
+        const folderCandidateIds = new Set(folderCandidates.map(v => v.id));
+        newData.folderVehicleId = folderCandidateIds.has(modalFolderVehicleId) ? modalFolderVehicleId : "";
+        if (newData.folderVehicleId) {
+            newData.links = [];
+        }
         const hullVal = document.getElementById("vehicleHull").value.trim();
         const turretVal = document.getElementById("vehicleTurret").value.trim();
         const gunVal = document.getElementById("vehicleGun").value.trim();
